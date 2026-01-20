@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Game Pass Price Checker</string>
+    <string name="search_hint">Search for Game Pass deals...</string>
+    <string name="filter_region">Region</string>
+    <string name="filter_type">Type</string>
+    <string name="filter_duration">Duration</string>
+    <string name="btn_search">Search</string>
+    <string name="btn_visit">Visit</string>
+    <string name="loading">Loading prices...</string>
+    <string name="no_results">No deals found. Try different filters.</string>
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="price_format">%1$s %2$s</string>
+    <string name="rating_format">Rating: %1$s</string>
+    
+    <!-- Regions -->
+    <string name="region_all">All Regions</string>
+    <string name="region_global">Global</string>
+    <string name="region_uae">UAE</string>
+    <string name="region_us">United States</string>
+    <string name="region_uk">United Kingdom</string>
+    <string name="region_eu">Europe</string>
+    <string name="region_turkey">Turkey</string>
+    <string name="region_brazil">Brazil</string>
+    <string name="region_argentina">Argentina</string>
+    <string name="region_india">India</string>
+    
+    <!-- Types -->
+    <string name="type_all">All Types</string>
+    <string name="type_key">Key</string>
+    <string name="type_account">Account</string>
+    
+    <!-- Durations -->
+    <string name="duration_all">All Durations</string>
+    <string name="duration_1month">1 Month</string>
+    <string name="duration_3months">3 Months</string>
+    <string name="duration_6months">6 Months</string>
+    <string name="duration_12months">12 Months</string>
+    
+    <!-- Seller trust levels -->
+    <string name="trust_high">Highly Trusted</string>
+    <string name="trust_medium">Trusted</string>
+    <string name="trust_caution">Use Caution</string>
+</resources>
