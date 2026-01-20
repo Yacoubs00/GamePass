@@ -1,0 +1,386 @@
+package com.gamepass.pricechecker.network
+
+import com.gamepass.pricechecker.models.*
+import kotlinx.coroutines.*
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
+import java.util.UUID
+
+/**
+ * Main price scraper that aggregates results from multiple sources
+ */
+class PriceScraper {
+    
+    private val scrapers = listOf(
+        AllKeyShopScraper(),
+        CDKeysScraper(),
+        EnebaScraper(),
+        G2AScraper()
+    )
+    
+    /**
+     * Search all sources for Game Pass Ultimate deals
+     */
+    suspend fun searchAll(filters: SearchFilters): SearchResult {
+        return withContext(Dispatchers.IO) {
+            val startTime = System.currentTimeMillis()
+            
+            try {
+                // Run all scrapers in parallel
+                val results = scrapers.map { scraper ->
+                    async {
+                        try {
+                            scraper.scrape(filters)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            emptyList()
+                        }
+                    }
+                }.awaitAll()
+                
+                // Flatten and filter results
+                val allDeals = results.flatten()
+                    .filter { filters.matches(it) }
+                    .sortedBy { it.price }
+                    .distinctBy { "${it.sellerName}-${it.region}-${it.duration}" }
+                
+                val searchTime = System.currentTimeMillis() - startTime
+                
+                if (allDeals.isEmpty()) {
+                    SearchResult.Empty
+                } else {
+                    SearchResult.Success(
+                        deals = allDeals,
+                        totalFound = allDeals.size,
+                        searchTimeMs = searchTime,
+                        sourcesSearched = scrapers.size
+                    )
+                }
+            } catch (e: Exception) {
+                SearchResult.Error("Failed to fetch prices: ${e.message}", e)
+            }
+        }
+    }
+}
+
+/**
+ * Base interface for all scrapers
+ */
+interface BaseScraper {
+    suspend fun scrape(filters: SearchFilters): List<PriceDeal>
+    
+    /**
+     * Helper to fetch HTML with proper headers
+     */
+    fun fetchDocument(url: String): Document {
+        return Jsoup.connect(url)
+            .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+            .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+            .header("Accept-Language", "en-US,en;q=0.5")
+            .timeout(15000)
+            .get()
+    }
+    
+    /**
+     * Generate unique ID for a deal
+     */
+    fun generateId(): String = UUID.randomUUID().toString().take(8)
+}
+
+/**
+ * Scraper for AllKeyShop - a price aggregator
+ */
+class AllKeyShopScraper : BaseScraper {
+    
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            
+            try {
+                val regionParam = when (filters.region) {
+                    Region.US -> "us"
+                    Region.UK -> "uk"
+                    Region.EU -> "eu"
+                    Region.UAE -> "ae"
+                    Region.GLOBAL -> "ww"
+                    else -> "ww"
+                }
+                
+                val url = "https://www.allkeyshop.com/blog/buy-xbox-game-pass-ultimate-cd-key-compare-prices/"
+                val doc = fetchDocument(url)
+                
+                // Parse the price comparison table
+                doc.select(".offers-table .offers-table-row").forEach { row ->
+                    try {
+                        val merchant = row.select(".merchant-name").text().trim()
+                        val priceText = row.select(".price").text()
+                            .replace("[^0-9.,]".toRegex(), "")
+                            .replace(",", ".")
+                        val price = priceText.toDoubleOrNull() ?: return@forEach
+                        
+                        val link = row.select("a.buy-btn").attr("href")
+                        val region = parseRegionFromText(row.select(".region").text())
+                        
+                        val seller = Sellers.getAll().find { 
+                            merchant.contains(it.name, ignoreCase = true) 
+                        }
+                        
+                        deals.add(PriceDeal(
+                            id = generateId(),
+                            sellerName = merchant,
+                            price = price,
+                            currency = "USD",
+                            region = region,
+                            type = DealType.KEY,
+                            duration = Duration.ONE_MONTH,
+                            url = link.ifEmpty { "https://www.allkeyshop.com" },
+                            trustLevel = seller?.trustLevel ?: TrustLevel.MEDIUM
+                        ))
+                    } catch (e: Exception) {
+                        // Skip malformed entries
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            
+            deals
+        }
+    }
+    
+    private fun parseRegionFromText(text: String): Region {
+        return when {
+            text.contains("Global", ignoreCase = true) -> Region.GLOBAL
+            text.contains("UAE", ignoreCase = true) || text.contains("Arab", ignoreCase = true) -> Region.UAE
+            text.contains("US", ignoreCase = true) || text.contains("United States", ignoreCase = true) -> Region.US
+            text.contains("UK", ignoreCase = true) || text.contains("United Kingdom", ignoreCase = true) -> Region.UK
+            text.contains("EU", ignoreCase = true) || text.contains("Europe", ignoreCase = true) -> Region.EU
+            text.contains("Turkey", ignoreCase = true) || text.contains("TR", ignoreCase = true) -> Region.TURKEY
+            text.contains("Brazil", ignoreCase = true) || text.contains("BR", ignoreCase = true) -> Region.BRAZIL
+            text.contains("Argentina", ignoreCase = true) || text.contains("AR", ignoreCase = true) -> Region.ARGENTINA
+            text.contains("India", ignoreCase = true) || text.contains("IN", ignoreCase = true) -> Region.INDIA
+            else -> Region.GLOBAL
+        }
+    }
+}
+
+/**
+ * Scraper for CDKeys
+ */
+class CDKeysScraper : BaseScraper {
+    
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            
+            try {
+                val url = "https://www.cdkeys.com/catalogsearch/result/?q=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                
+                doc.select(".product-item").forEach { item ->
+                    try {
+                        val title = item.select(".product-item-name").text()
+                        
+                        // Only include Game Pass Ultimate products
+                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        
+                        val priceText = item.select(".price").first()?.text()
+                            ?.replace("[^0-9.,]".toRegex(), "")
+                            ?.replace(",", ".")
+                        val price = priceText?.toDoubleOrNull() ?: return@forEach
+                        
+                        val link = item.select("a.product-item-link").attr("href")
+                        val duration = parseDurationFromTitle(title)
+                        val region = parseRegionFromTitle(title)
+                        
+                        deals.add(PriceDeal(
+                            id = generateId(),
+                            sellerName = "CDKeys",
+                            price = price,
+                            currency = "USD",
+                            region = region,
+                            type = DealType.KEY,
+                            duration = duration,
+                            url = link.ifEmpty { "https://www.cdkeys.com" },
+                            trustLevel = TrustLevel.HIGH
+                        ))
+                    } catch (e: Exception) {
+                        // Skip malformed entries
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            
+            deals
+        }
+    }
+    
+    private fun parseDurationFromTitle(title: String): Duration {
+        return when {
+            title.contains("12 month", ignoreCase = true) || title.contains("1 year", ignoreCase = true) -> Duration.TWELVE_MONTHS
+            title.contains("6 month", ignoreCase = true) -> Duration.SIX_MONTHS
+            title.contains("3 month", ignoreCase = true) -> Duration.THREE_MONTHS
+            title.contains("1 month", ignoreCase = true) -> Duration.ONE_MONTH
+            else -> Duration.ONE_MONTH
+        }
+    }
+    
+    private fun parseRegionFromTitle(title: String): Region {
+        return when {
+            title.contains("Global", ignoreCase = true) -> Region.GLOBAL
+            title.contains("UAE", ignoreCase = true) -> Region.UAE
+            title.contains("US", ignoreCase = true) -> Region.US
+            title.contains("UK", ignoreCase = true) -> Region.UK
+            title.contains("EU", ignoreCase = true) -> Region.EU
+            title.contains("TR", ignoreCase = true) || title.contains("Turkey", ignoreCase = true) -> Region.TURKEY
+            title.contains("BR", ignoreCase = true) || title.contains("Brazil", ignoreCase = true) -> Region.BRAZIL
+            title.contains("AR", ignoreCase = true) || title.contains("Argentina", ignoreCase = true) -> Region.ARGENTINA
+            else -> Region.GLOBAL
+        }
+    }
+}
+
+/**
+ * Scraper for Eneba
+ */
+class EnebaScraper : BaseScraper {
+    
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            
+            try {
+                val url = "https://www.eneba.com/store/xbox?text=game%20pass%20ultimate"
+                val doc = fetchDocument(url)
+                
+                doc.select("[data-component='ProductCard']").forEach { card ->
+                    try {
+                        val title = card.select("[data-component='ProductCardTitle']").text()
+                        
+                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        
+                        val priceText = card.select("[data-component='Price']").text()
+                            .replace("[^0-9.,]".toRegex(), "")
+                            .replace(",", ".")
+                        val price = priceText.toDoubleOrNull() ?: return@forEach
+                        
+                        val link = card.select("a").attr("href")
+                        val fullLink = if (link.startsWith("http")) link else "https://www.eneba.com$link"
+                        
+                        deals.add(PriceDeal(
+                            id = generateId(),
+                            sellerName = "Eneba",
+                            price = price,
+                            currency = "EUR",
+                            region = parseRegionFromTitle(title),
+                            type = DealType.KEY,
+                            duration = parseDurationFromTitle(title),
+                            url = fullLink,
+                            trustLevel = TrustLevel.HIGH
+                        ))
+                    } catch (e: Exception) {
+                        // Skip malformed entries
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            
+            deals
+        }
+    }
+    
+    private fun parseDurationFromTitle(title: String): Duration {
+        return when {
+            title.contains("12", ignoreCase = true) || title.contains("year", ignoreCase = true) -> Duration.TWELVE_MONTHS
+            title.contains("6", ignoreCase = true) -> Duration.SIX_MONTHS
+            title.contains("3", ignoreCase = true) -> Duration.THREE_MONTHS
+            else -> Duration.ONE_MONTH
+        }
+    }
+    
+    private fun parseRegionFromTitle(title: String): Region {
+        return when {
+            title.contains("Global", ignoreCase = true) -> Region.GLOBAL
+            title.contains("UAE", ignoreCase = true) -> Region.UAE
+            title.contains("US", ignoreCase = true) -> Region.US
+            title.contains("UK", ignoreCase = true) -> Region.UK
+            title.contains("EU", ignoreCase = true) -> Region.EU
+            title.contains("Turkey", ignoreCase = true) -> Region.TURKEY
+            else -> Region.GLOBAL
+        }
+    }
+}
+
+/**
+ * Scraper for G2A (with caution warning)
+ */
+class G2AScraper : BaseScraper {
+    
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            
+            try {
+                val url = "https://www.g2a.com/search?query=xbox%20game%20pass%20ultimate"
+                val doc = fetchDocument(url)
+                
+                doc.select("[data-testid='ProductCard']").forEach { card ->
+                    try {
+                        val title = card.select("[data-testid='ProductCard-title']").text()
+                        
+                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        
+                        val priceText = card.select("[data-testid='ProductCard-price']").text()
+                            .replace("[^0-9.,]".toRegex(), "")
+                            .replace(",", ".")
+                        val price = priceText.toDoubleOrNull() ?: return@forEach
+                        
+                        val link = card.select("a").attr("href")
+                        val fullLink = if (link.startsWith("http")) link else "https://www.g2a.com$link"
+                        
+                        deals.add(PriceDeal(
+                            id = generateId(),
+                            sellerName = "G2A",
+                            price = price,
+                            currency = "EUR",
+                            region = parseRegionFromTitle(title),
+                            type = DealType.KEY,
+                            duration = parseDurationFromTitle(title),
+                            url = fullLink,
+                            trustLevel = TrustLevel.CAUTION // G2A requires caution
+                        ))
+                    } catch (e: Exception) {
+                        // Skip malformed entries
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            
+            deals
+        }
+    }
+    
+    private fun parseDurationFromTitle(title: String): Duration {
+        return when {
+            title.contains("12", ignoreCase = true) -> Duration.TWELVE_MONTHS
+            title.contains("6", ignoreCase = true) -> Duration.SIX_MONTHS
+            title.contains("3", ignoreCase = true) -> Duration.THREE_MONTHS
+            else -> Duration.ONE_MONTH
+        }
+    }
+    
+    private fun parseRegionFromTitle(title: String): Region {
+        return when {
+            title.contains("Global", ignoreCase = true) -> Region.GLOBAL
+            title.contains("UAE", ignoreCase = true) -> Region.UAE
+            title.contains("US", ignoreCase = true) -> Region.US
+            title.contains("UK", ignoreCase = true) -> Region.UK
+            title.contains("EU", ignoreCase = true) -> Region.EU
+            title.contains("Turkey", ignoreCase = true) -> Region.TURKEY
+            else -> Region.GLOBAL
+        }
+    }
+}
