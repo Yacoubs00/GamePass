@@ -24,37 +24,13 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Create Gradle Wrapper
-      run: |
-        mkdir -p gradle/wrapper
-        cat > gradle/wrapper/gradle-wrapper.properties << 'PROPS'
-        distributionBase=GRADLE_USER_HOME
-        distributionPath=wrapper/dists
-        distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-bin.zip
-        networkTimeout=10000
-        zipStoreBase=GRADLE_USER_HOME
-        zipStorePath=wrapper/dists
-        PROPS
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.2'
 
-    - name: Download Gradle Wrapper JAR
-      run: |
-        curl -L -o gradle/wrapper/gradle-wrapper.jar https://github.com/nickyout/gradle-wrapper-jar/raw/refs/heads/master/gradle-wrapper-8.0.jar
-
-    - name: Create Gradlew Script
-      run: |
-        cat > gradlew << 'SCRIPT'
-        #!/bin/sh
-        CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
-        APP_HOME=$( cd "${0%/*}/" && pwd -P )
-        exec java -classpath "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"
-        SCRIPT
-        chmod +x gradlew
-
-    - name: Build with Gradle
-      uses: gradle/actions/setup-gradle@v3
-      
     - name: Build Debug APK
-      run: ./gradlew assembleDebug --no-daemon
+      run: gradle assembleDebug --stacktrace
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
@@ -63,7 +39,7 @@ jobs:
         path: app/build/outputs/apk/debug/app-debug.apk
 
     - name: Build Release APK
-      run: ./gradlew assembleRelease --no-daemon
+      run: gradle assembleRelease
       
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
