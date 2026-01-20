@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Game controller icon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,30 C42,30 35,38 35,48 L35,60 C35,70 42,78 54,78 C66,78 73,70 73,60 L73,48 C73,38 66,30 54,30 Z M46,50 L42,50 L42,46 L46,46 L46,42 L50,42 L50,46 L54,46 L54,50 L50,50 L50,54 L46,54 L46,50 Z M62,54 C60,54 58,52 58,50 C58,48 60,46 62,46 C64,46 66,48 66,50 C66,52 64,54 62,54 Z M66,62 C64,62 62,60 62,58 C62,56 64,54 66,54 C68,54 70,56 70,58 C70,60 68,62 66,62 Z"/>
+</vector>
