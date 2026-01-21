@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity() {
         val isDarkMode = prefs.getBoolean(KEY_DARK_MODE, true)
         btnThemeToggle.setImageResource(
             if (isDarkMode) android.R.drawable.ic_menu_day  // Sun icon for switching to light
-            else android.R.drawable.ic_menu_night           // Moon icon for switching to dark (Note: using available system icons)
+            else android.R.drawable.ic_menu_compass         // Compass icon for switching to dark
         )
     }
 
