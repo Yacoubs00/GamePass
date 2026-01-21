@@ -27,6 +27,12 @@
             </intent-filter>
         </activity>
         
+        <activity
+            android:name=".ui.TrustInfoActivity"
+            android:exported="false"
+            android:label="Seller Trust Levels"
+            android:theme="@style/Theme.GamePassPriceChecker" />
+        
     </application>
 
 </manifest>
