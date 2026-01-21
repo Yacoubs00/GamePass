@@ -1,10 +1,12 @@
 package com.gamepass.pricechecker.network
 
+import android.content.Context
 import com.gamepass.pricechecker.models.*
 import kotlinx.coroutines.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.util.UUID
+import kotlin.random.Random
 
 /**
  * Search query variants and matching utilities
@@ -64,8 +66,14 @@ object GamePassSearchUtils {
 
 /**
  * Main price scraper that aggregates results from multiple sources
+ * Uses WebView for Cloudflare-protected sites
  */
-class PriceScraper {
+class PriceScraper(private val context: Context? = null) {
+    
+    // WebView scraper for Cloudflare sites (lazy initialized)
+    private val webViewScraper: WebViewScraper? by lazy {
+        context?.let { WebViewScraper(it) }
+    }
     
     private val scrapers = listOf(
         AllKeyShopScraper(),
@@ -133,7 +141,10 @@ interface BaseScraper {
      * Helper to fetch HTML with realistic browser headers
      * Uses Android Chrome headers to appear as legitimate mobile browser
      */
-    fun fetchDocument(url: String): Document {
+    fun fetchDocument(url: String, timeoutMs: Int = 20000): Document {
+        // Add random delay to mimic human behavior (500ms - 2000ms)
+        Thread.sleep(Random.nextLong(500, 2000))
+        
         return Jsoup.connect(url)
             // Realistic Android Chrome User-Agent
             .userAgent("Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
@@ -153,8 +164,36 @@ interface BaseScraper {
             .header("sec-ch-ua-platform", "\"Android\"")
             .followRedirects(true)
             .ignoreHttpErrors(true)
-            .timeout(20000)
+            .timeout(timeoutMs)
             .get()
+    }
+    
+    /**
+     * Fetch document with retry logic and exponential backoff
+     * Good for slow sites like AllKeyShop
+     */
+    fun fetchDocumentWithRetry(url: String, maxRetries: Int = 3, baseTimeoutMs: Int = 30000): Document? {
+        var lastException: Exception? = null
+        
+        repeat(maxRetries) { attempt ->
+            try {
+                // Exponential backoff: 30s, 45s, 60s
+                val timeout = baseTimeoutMs + (attempt * 15000)
+                
+                // Add delay between retries
+                if (attempt > 0) {
+                    Thread.sleep(Random.nextLong(2000, 5000))
+                }
+                
+                return fetchDocument(url, timeout)
+            } catch (e: Exception) {
+                lastException = e
+                // Continue to next retry
+            }
+        }
+        
+        lastException?.let { throw it }
+        return null
     }
     
     /**
@@ -165,6 +204,7 @@ interface BaseScraper {
 
 /**
  * Scraper for AllKeyShop - a price aggregator
+ * Uses retry logic with longer timeouts since this site can be slow
  */
 class AllKeyShopScraper : BaseScraper {
     
@@ -183,7 +223,8 @@ class AllKeyShopScraper : BaseScraper {
                 }
                 
                 val url = "https://www.allkeyshop.com/blog/buy-xbox-game-pass-ultimate-cd-key-compare-prices/"
-                val doc = fetchDocument(url)
+                // Use retry logic with 60s timeout for this slow site
+                val doc = fetchDocumentWithRetry(url, maxRetries = 3, baseTimeoutMs = 60000) ?: return@withContext deals
                 
                 // Parse the price comparison table
                 doc.select(".offers-table .offers-table-row").forEach { row ->
