@@ -194,36 +194,52 @@ class PriceFetchService : Service() {
         
         updateNotification("Fetching $siteName (${completedSites.get() + 1}/${sitesToFetch.size})...")
         
-        // Create new WebView on main thread (each site gets its own WebView for parallel fetching)
-        val webView = WebView(this).apply {
-            layoutParams = FrameLayout.LayoutParams(1, 1) // Offscreen
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            settings.userAgentString = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-            
-            webViewClient = object : BypassClient() {
-                private var pageLoaded = false
+        try {
+            // Create new WebView on main thread (each site gets its own WebView for parallel fetching)
+            // Use applicationContext to avoid memory leaks and crashes
+            val webView = WebView(applicationContext).apply {
+                layoutParams = FrameLayout.LayoutParams(1, 1) // Offscreen
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                settings.userAgentString = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                 
-                override fun onPageFinishedByPassed(view: WebView?, url: String?) {
-                    super.onPageFinishedByPassed(view, url)
+                webViewClient = object : BypassClient() {
+                    private var pageLoaded = false
                     
-                    if (pageLoaded) return
-                    pageLoaded = true
-                    
-                    // Wait for JS to render content
-                    handler.postDelayed({
-                        extractPrices(view, siteName, site)
-                    }, 3000) // 3 second delay for JS rendering
+                    override fun onPageFinishedByPassed(view: WebView?, url: String?) {
+                        super.onPageFinishedByPassed(view, url)
+                        
+                        if (pageLoaded) return
+                        pageLoaded = true
+                        
+                        // Wait for JS to render content
+                        handler.postDelayed({
+                            extractPrices(view, siteName, site)
+                        }, 3000) // 3 second delay for JS rendering
+                    }
                 }
             }
+            
+            // Track this WebView for cleanup
+            synchronized(webViews) {
+                webViews.add(webView)
+            }
+            
+            webView.loadUrl(site.url)
+        } catch (e: Exception) {
+            // WebView creation failed (can happen on some devices/Android versions)
+            e.printStackTrace()
+            val completed = completedSites.incrementAndGet()
+            handler.post {
+                if (completed >= sitesToFetch.size) {
+                    broadcastComplete()
+                    stopSelf()
+                } else {
+                    fetchNextSite()
+                }
+            }
+            return
         }
-        
-        // Track this WebView for cleanup
-        synchronized(webViews) {
-            webViews.add(webView)
-        }
-        
-        webView.loadUrl(site.url)
         
         // Timeout after 20 seconds per site
         handler.postDelayed({
