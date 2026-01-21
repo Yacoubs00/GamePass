@@ -87,10 +87,8 @@ class WebViewScraper(private val context: Context) {
             }
             
             // Accept cookies (important for Cloudflare)
-            CookieManager.getInstance().apply {
-                setAcceptCookie(true)
-                setAcceptThirdPartyCookies(this@apply, true)
-            }
+            CookieManager.getInstance().setAcceptCookie(true)
+            CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
         }
     }
 
