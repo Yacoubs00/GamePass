@@ -117,10 +117,11 @@ class MainActivity : AppCompatActivity() {
     
     // Current filters
     private var currentFilters = SearchFilters(
-        region = Region.ALL,  // Default to all, but UAE is prioritized in display
-        type = DealType.ALL,
-        duration = Duration.ALL,
-        trustFilter = TrustFilter.ALL
+        region = Region.UAE,  // Default to UAE
+        type = DealType.KEY,  // Default to Key type
+        duration = Duration.ONE_MONTH,  // Default to 1 month
+        trustFilter = TrustFilter.ALL,
+        excludeTrials = true  // No trials by default
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
