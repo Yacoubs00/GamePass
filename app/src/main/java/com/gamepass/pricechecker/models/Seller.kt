@@ -135,13 +135,94 @@ object Sellers {
         features = listOf("Low prices", "Various regions", "Quick delivery")
     )
     
-    val Cdkeys_com = Seller(
-        id = "cdkeyscom",
-        name = "CDKeys.com",
-        website = "https://www.cdkeys.com",
+    val Fanatical = Seller(
+        id = "fanatical",
+        name = "Fanatical",
+        website = "https://www.fanatical.com",
         trustLevel = TrustLevel.HIGH,
-        description = "Popular trusted retailer",
-        features = listOf("Instant delivery", "Great prices", "Reliable")
+        description = "Authorized reseller with great bundles",
+        features = listOf("Star deals", "Bundles", "Authorized")
+    )
+    
+    val K4G = Seller(
+        id = "k4g",
+        name = "K4G",
+        website = "https://k4g.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Key marketplace with good prices",
+        features = listOf("Competitive prices", "Fast delivery", "Various regions")
+    )
+    
+    val Gameseal = Seller(
+        id = "gameseal",
+        name = "GAMESEAL",
+        website = "https://gameseal.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Trusted key marketplace",
+        features = listOf("Buyer protection", "Good prices", "Fast delivery")
+    )
+    
+    val GamersOutlet = Seller(
+        id = "gamersoutlet",
+        name = "Gamers Outlet",
+        website = "https://www.gamers-outlet.net",
+        trustLevel = TrustLevel.MEDIUM,
+        description = "Budget key seller",
+        features = listOf("Low prices", "Various regions", "Quick delivery")
+    )
+    
+    val MMOGA = Seller(
+        id = "mmoga",
+        name = "MMOGA",
+        website = "https://www.mmoga.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "German marketplace, very reliable",
+        features = listOf("Established since 2002", "24/7 support", "Trusted")
+    )
+    
+    val Voidu = Seller(
+        id = "voidu",
+        name = "Voidu",
+        website = "https://www.voidu.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Netherlands-based authorized reseller",
+        features = listOf("Authorized", "Good prices", "EU-based")
+    )
+    
+    val Nuuvem = Seller(
+        id = "nuuvem",
+        name = "Nuuvem",
+        website = "https://www.nuuvem.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Brazil-based, great for SA region",
+        features = listOf("South America specialist", "Good prices", "Authorized")
+    )
+    
+    val MTCGame = Seller(
+        id = "mtcgame",
+        name = "MTCGame",
+        website = "https://mtcgame.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Turkish marketplace, great regional prices",
+        features = listOf("Turkey keys", "Good prices", "Fast delivery")
+    )
+    
+    val Wyrel = Seller(
+        id = "wyrel",
+        name = "Wyrel",
+        website = "https://wyrel.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Specializes in Turkey region keys",
+        features = listOf("Turkey specialist", "Best regional prices", "Reliable")
+    )
+    
+    val TwoGame = Seller(
+        id = "2game",
+        name = "2Game",
+        website = "https://2game.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Authorized reseller",
+        features = listOf("Official keys", "Authorized", "Reliable")
     )
     
     /**
@@ -150,7 +231,9 @@ object Sellers {
     fun getAll(): List<Seller> = listOf(
         CDKeys, Eneba, InstantGaming, GreenManGaming, 
         Kinguin, G2A, HumbleBundle, Gamivo,
-        GGDeals, Difmark, HRKGame, Gamesplanet, SCDKey
+        GGDeals, Difmark, HRKGame, Gamesplanet,
+        Fanatical, K4G, Gameseal, GamersOutlet,
+        MMOGA, Voidu, Nuuvem, MTCGame, Wyrel, TwoGame
     )
     
     /**
