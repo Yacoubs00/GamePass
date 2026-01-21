@@ -14,7 +14,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.darkryh.cloudflarebypass.ByPassWebClient
+import com.ead.lib.cloudflare_bypass.BypassClient
 import com.gamepass.pricechecker.R
 import com.gamepass.pricechecker.models.PriceDeal
 import com.gamepass.pricechecker.models.Region
@@ -181,7 +181,7 @@ class PriceFetchService : Service() {
             settings.domStorageEnabled = true
             settings.userAgentString = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
             
-            webViewClient = object : ByPassWebClient() {
+            webViewClient = object : BypassClient() {
                 private var pageLoaded = false
                 
                 override fun onPageFinishedByPassed(view: WebView?, url: String?) {
