@@ -52,6 +52,13 @@ class MainActivity : AppCompatActivity() {
     // Theme toggle and info button
     private lateinit var btnThemeToggle: ImageButton
     private lateinit var btnInfo: ImageButton
+    
+    // Progress views for streaming results
+    private lateinit var layoutProgress: LinearLayout
+    private lateinit var tvCurrentSite: TextView
+    private lateinit var tvFoundCount: TextView
+    private lateinit var progressBar: com.google.android.material.progressindicator.LinearProgressIndicator
+    private lateinit var tvProgressStatus: TextView
 
     // Adapter and data
     private lateinit var dealsAdapter: DealsAdapter
@@ -142,6 +149,13 @@ class MainActivity : AppCompatActivity() {
         // Info button
         btnInfo = findViewById(R.id.btnInfo)
         
+        // Progress views for streaming results
+        layoutProgress = findViewById(R.id.layoutProgress)
+        tvCurrentSite = findViewById(R.id.tvCurrentSite)
+        tvFoundCount = findViewById(R.id.tvFoundCount)
+        progressBar = findViewById(R.id.progressBar)
+        tvProgressStatus = findViewById(R.id.tvProgressStatus)
+        
         // Style the swipe refresh
         swipeRefresh.setColorSchemeResources(R.color.xbox_green)
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.background_secondary)
@@ -211,16 +225,45 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun searchDeals() {
-        showLoadingState()
+        showStreamingState()
 
         lifecycleScope.launch {
+            val startTime = System.currentTimeMillis()
+            
             try {
-                // Try to scrape live data
-                val result = priceScraper.searchAll(currentFilters)
+                // Use streaming search with progress callbacks
+                val result = priceScraper.searchAllStreaming(
+                    filters = currentFilters,
+                    onProgress = { progress ->
+                        // Update progress UI (already on main thread from PriceScraper)
+                        tvCurrentSite.text = "Searching ${progress.currentSite}..."
+                        tvFoundCount.text = "${progress.dealsFound} found"
+                        tvProgressStatus.text = "${progress.sitesSearched} of ${progress.totalSites} sites searched"
+                        
+                        // Update progress bar
+                        val progressPercent = if (progress.totalSites > 0) {
+                            (progress.sitesSearched * 100) / progress.totalSites
+                        } else 0
+                        progressBar.setProgressCompat(progressPercent, true)
+                    },
+                    onDealsFound = { deals ->
+                        // Stream results to UI as they arrive (already sorted by PriceScraper)
+                        if (deals.isNotEmpty()) {
+                            dealsAdapter.submitList(deals.toList())
+                            recyclerDeals.visibility = View.VISIBLE
+                            
+                            // Update result count
+                            tvResultCount.text = "${deals.size} deals"
+                            tvResultCount.visibility = View.VISIBLE
+                        }
+                    }
+                )
+                
+                val searchTime = System.currentTimeMillis() - startTime
                 
                 when (result) {
                     is SearchResult.Success -> {
-                        showResults(result.deals, result.searchTimeMs)
+                        hideProgressShowResults(result.deals, searchTime)
                     }
                     is SearchResult.Empty -> {
                         // Fall back to sample data if scraping returns nothing
@@ -229,7 +272,7 @@ class MainActivity : AppCompatActivity() {
                             .sortedBy { it.price }
                         
                         if (fallbackDeals.isNotEmpty()) {
-                            showResults(fallbackDeals, 0, isFallback = true)
+                            hideProgressShowResults(fallbackDeals, 0, isFallback = true)
                         } else {
                             showEmptyState()
                         }
@@ -241,7 +284,7 @@ class MainActivity : AppCompatActivity() {
                             .sortedBy { it.price }
                         
                         if (fallbackDeals.isNotEmpty()) {
-                            showResults(fallbackDeals, 0, isFallback = true)
+                            hideProgressShowResults(fallbackDeals, 0, isFallback = true)
                             Snackbar.make(
                                 recyclerDeals,
                                 "Showing cached prices. Pull to refresh.",
@@ -262,11 +305,66 @@ class MainActivity : AppCompatActivity() {
                     .sortedBy { it.price }
                 
                 if (fallbackDeals.isNotEmpty()) {
-                    showResults(fallbackDeals, 0, isFallback = true)
+                    hideProgressShowResults(fallbackDeals, 0, isFallback = true)
                 } else {
                     showErrorState(e.message ?: "Unknown error occurred")
                 }
             }
+        }
+    }
+    
+    private fun showStreamingState() {
+        swipeRefresh.isRefreshing = false
+        
+        // Show progress bar at top with results below
+        layoutProgress.visibility = View.VISIBLE
+        layoutLoading.visibility = View.GONE
+        layoutEmpty.visibility = View.GONE
+        layoutError.visibility = View.GONE
+        recyclerDeals.visibility = View.VISIBLE  // Show results area (will populate as results come in)
+        
+        // Reset progress UI
+        tvCurrentSite.text = "Starting search..."
+        tvFoundCount.text = "0 found"
+        tvProgressStatus.text = "0 of 8 sites"
+        progressBar.setProgressCompat(0, false)
+        
+        // Clear previous results
+        dealsAdapter.submitList(emptyList())
+        tvResultCount.visibility = View.GONE
+    }
+    
+    private fun hideProgressShowResults(deals: List<PriceDeal>, searchTimeMs: Long, isFallback: Boolean = false) {
+        swipeRefresh.isRefreshing = false
+        
+        // Hide progress, show final results
+        layoutProgress.visibility = View.GONE
+        layoutLoading.visibility = View.GONE
+        layoutEmpty.visibility = View.GONE
+        layoutError.visibility = View.GONE
+        recyclerDeals.visibility = View.VISIBLE
+        
+        // Sort deals - prioritize UAE and Global together, then by price
+        val sortedDeals = deals.sortedWith(compareBy(
+            { if (it.region == Region.UAE || it.region == Region.GLOBAL) 0 else 1 },
+            { it.price }
+        ))
+
+        dealsAdapter.submitList(sortedDeals)
+
+        // Update result count
+        val countText = if (isFallback) {
+            "${sortedDeals.size} deals (sample data)"
+        } else {
+            "${sortedDeals.size} deals found in ${searchTimeMs}ms"
+        }
+        tvResultCount.text = countText
+        tvResultCount.visibility = View.VISIBLE
+
+        // Show best deal notification
+        sortedDeals.firstOrNull()?.let { bestDeal ->
+            val message = "Best price: ${bestDeal.getFormattedPrice()} at ${bestDeal.sellerName}"
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
     }
 
