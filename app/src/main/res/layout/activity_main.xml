@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_primary"
+    android:background="?android:colorBackground"
     tools:context=".ui.MainActivity">
 
     <!-- App Bar -->
@@ -13,33 +13,53 @@
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/background_primary"
+        android:background="?android:colorBackground"
         app:elevation="0dp">
 
-        <!-- Header with logo and title -->
+        <!-- Header with logo, title, and theme toggle -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:padding="@dimen/margin_medium">
 
-            <TextView
-                android:id="@+id/tvTitle"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="🎮 Game Pass Price Checker"
-                android:textColor="@color/text_primary"
-                android:textSize="@dimen/text_title"
-                android:textStyle="bold" />
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvSubtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Find the best Xbox Game Pass Ultimate deals"
-                android:textColor="@color/text_secondary"
-                android:textSize="@dimen/text_body" />
+                <TextView
+                    android:id="@+id/tvTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎮 Game Pass Price Checker"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="@dimen/text_title"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Find the best Xbox Game Pass Ultimate deals"
+                    android:textColor="?android:textColorSecondary"
+                    android:textSize="@dimen/text_body" />
+
+            </LinearLayout>
+
+            <!-- Theme Toggle Button -->
+            <ImageButton
+                android:id="@+id/btnThemeToggle"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Toggle theme"
+                android:src="@android:drawable/ic_menu_day"
+                android:padding="8dp"
+                app:tint="?android:textColorPrimary" />
 
         </LinearLayout>
 
