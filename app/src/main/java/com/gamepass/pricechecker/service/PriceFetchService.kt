@@ -121,12 +121,16 @@ class PriceFetchService : Service() {
         val linkSelector: String
     )
     
-    private var webView: WebView? = null
+    private val webViews = mutableListOf<WebView>()
     private val handler = Handler(Looper.getMainLooper())
     private var sitesToFetch = mutableListOf<String>()
     private var currentSiteIndex = AtomicInteger(0)
+    private var completedSites = AtomicInteger(0)
     private val allDeals = mutableListOf<PriceDeal>()
     private val gson = Gson()
+    
+    // Number of parallel WebViews (3-5 simultaneous)
+    private val PARALLEL_WEBVIEWS = 3
     
     override fun onCreate() {
         super.onCreate()
@@ -139,12 +143,21 @@ class PriceFetchService : Service() {
             ACTION_FETCH_PRICES -> {
                 val sites = intent.getStringArrayListExtra(EXTRA_SITE_LIST) ?: ArrayList(CLOUDFLARE_SITES.keys)
                 sitesToFetch.clear()
-                sitesToFetch.addAll(sites.filter { CLOUDFLARE_SITES.containsKey(it) })
+                
+                // Filter valid sites and ensure AllKeyShop is LAST
+                val validSites = sites.filter { CLOUDFLARE_SITES.containsKey(it) }.toMutableList()
+                if (validSites.remove("AllKeyShop")) {
+                    validSites.add("AllKeyShop") // Add at end
+                }
+                sitesToFetch.addAll(validSites)
+                
                 currentSiteIndex.set(0)
+                completedSites.set(0)
                 allDeals.clear()
                 
                 if (sitesToFetch.isNotEmpty()) {
-                    handler.post { fetchNextSite() }
+                    // Start multiple parallel WebViews
+                    handler.post { startParallelFetching() }
                 } else {
                     stopSelf()
                 }
@@ -153,29 +166,36 @@ class PriceFetchService : Service() {
         return START_NOT_STICKY
     }
     
+    private fun startParallelFetching() {
+        // Launch up to PARALLEL_WEBVIEWS simultaneous fetches
+        repeat(PARALLEL_WEBVIEWS) {
+            fetchNextSite()
+        }
+    }
+    
     private fun fetchNextSite() {
         val index = currentSiteIndex.getAndIncrement()
         
         if (index >= sitesToFetch.size) {
-            // All sites fetched
-            broadcastComplete()
-            stopSelf()
+            // Check if all sites are done
+            if (completedSites.get() >= sitesToFetch.size) {
+                broadcastComplete()
+                stopSelf()
+            }
             return
         }
         
         val siteName = sitesToFetch[index]
         val site = CLOUDFLARE_SITES[siteName] ?: run {
+            completedSites.incrementAndGet()
             fetchNextSite()
             return
         }
         
-        updateNotification("Fetching $siteName (${index + 1}/${sitesToFetch.size})...")
+        updateNotification("Fetching $siteName (${completedSites.get() + 1}/${sitesToFetch.size})...")
         
-        // Clean up previous WebView
-        webView?.destroy()
-        
-        // Create new WebView on main thread
-        webView = WebView(this).apply {
+        // Create new WebView on main thread (each site gets its own WebView for parallel fetching)
+        val webView = WebView(this).apply {
             layoutParams = FrameLayout.LayoutParams(1, 1) // Offscreen
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
@@ -198,47 +218,136 @@ class PriceFetchService : Service() {
             }
         }
         
-        webView?.loadUrl(site.url)
+        // Track this WebView for cleanup
+        synchronized(webViews) {
+            webViews.add(webView)
+        }
         
-        // Timeout after 30 seconds
+        webView.loadUrl(site.url)
+        
+        // Timeout after 20 seconds per site
         handler.postDelayed({
-            if (currentSiteIndex.get() == index + 1) {
-                // Still on this site, move to next
-                fetchNextSite()
+            // If this WebView is still active, force complete and move on
+            synchronized(webViews) {
+                if (webViews.contains(webView)) {
+                    webViews.remove(webView)
+                    webView.destroy()
+                    val completed = completedSites.incrementAndGet()
+                    if (completed >= sitesToFetch.size) {
+                        broadcastComplete()
+                        stopSelf()
+                    } else if (currentSiteIndex.get() < sitesToFetch.size) {
+                        fetchNextSite()
+                    }
+                }
             }
-        }, 30000)
+        }, 20000)
     }
     
     private fun extractPrices(webView: WebView?, siteName: String, site: CloudflareSite) {
+        // JavaScript to extract product cards with title, price, AND URL
         val js = """
             (function() {
-                var prices = [];
-                var priceElements = document.querySelectorAll('${site.priceSelector}');
-                priceElements.forEach(function(el) {
-                    var text = el.innerText || el.textContent || '';
-                    if (text.match(/[\d.,]+/)) {
-                        prices.push(text.trim());
-                    }
+                var products = [];
+                
+                // Generic product card selectors that work across most sites
+                var cardSelectors = [
+                    'a[href*="game-pass"]',
+                    'a[href*="gamepass"]', 
+                    'a[href*="xbox"]',
+                    '.product-card a',
+                    '.product-item a',
+                    '.product a',
+                    '[class*="product"] a',
+                    '[class*="offer"] a',
+                    '[class*="deal"] a',
+                    '.item a',
+                    '.card a'
+                ];
+                
+                var processedUrls = new Set();
+                
+                cardSelectors.forEach(function(selector) {
+                    document.querySelectorAll(selector).forEach(function(link) {
+                        var href = link.href || link.getAttribute('href') || '';
+                        if (!href || processedUrls.has(href)) return;
+                        if (!href.includes('game') && !href.includes('xbox') && !href.includes('pass')) return;
+                        
+                        processedUrls.add(href);
+                        
+                        // Find price near this link
+                        var parent = link.closest('[class*="product"], [class*="card"], [class*="item"], [class*="offer"], li, article, div');
+                        if (!parent) parent = link.parentElement;
+                        
+                        var priceText = '';
+                        var titleText = '';
+                        
+                        if (parent) {
+                            // Find price
+                            var priceEl = parent.querySelector('[class*="price"], [class*="Price"], .amount, [data-price]');
+                            if (priceEl) priceText = priceEl.innerText || priceEl.textContent || '';
+                            
+                            // Find title  
+                            var titleEl = parent.querySelector('[class*="title"], [class*="name"], h1, h2, h3, h4, .product-name');
+                            if (titleEl) titleText = titleEl.innerText || titleEl.textContent || '';
+                            if (!titleText) titleText = link.innerText || link.textContent || link.title || '';
+                        }
+                        
+                        // Extract numeric price
+                        var priceMatch = priceText.replace(/,/g, '.').match(/(\d+\.?\d*)/);
+                        var price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                        
+                        if (price > 0 && price < 200 && titleText.length > 3) {
+                            products.push({
+                                title: titleText.trim().substring(0, 100),
+                                price: price,
+                                priceText: priceText.trim(),
+                                url: href.startsWith('http') ? href : (window.location.origin + href)
+                            });
+                        }
+                    });
                 });
+                
+                // Also try to find standalone price elements and associate with nearest link
+                if (products.length === 0) {
+                    document.querySelectorAll('${site.priceSelector}').forEach(function(priceEl) {
+                        var priceText = priceEl.innerText || priceEl.textContent || '';
+                        var priceMatch = priceText.replace(/,/g, '.').match(/(\d+\.?\d*)/);
+                        var price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                        
+                        if (price > 0 && price < 200) {
+                            var parent = priceEl.closest('a, [class*="product"], [class*="card"], li, article');
+                            var link = parent ? (parent.tagName === 'A' ? parent : parent.querySelector('a')) : null;
+                            var url = link ? (link.href || link.getAttribute('href') || '') : window.location.href;
+                            
+                            products.push({
+                                title: 'Xbox Game Pass Ultimate',
+                                price: price,
+                                priceText: priceText.trim(),
+                                url: url.startsWith('http') ? url : (window.location.origin + (url || ''))
+                            });
+                        }
+                    });
+                }
+                
                 return JSON.stringify({
-                    html: document.body.innerHTML.substring(0, 50000),
-                    prices: prices.slice(0, 10),
-                    url: window.location.href
+                    products: products.slice(0, 15),
+                    pageUrl: window.location.href,
+                    pageTitle: document.title
                 });
             })();
         """.trimIndent()
         
         webView?.evaluateJavascript(js) { result ->
             try {
-                val cleanResult = result?.trim('"')?.replace("\\\"", "\"")?.replace("\\n", "\n") ?: "{}"
+                val cleanResult = result?.trim('"')?.replace("\\\"", "\"")?.replace("\\n", "\n")?.replace("\\\\", "\\") ?: "{}"
                 val data = gson.fromJson(cleanResult, Map::class.java) as? Map<String, Any>
                 
-                val html = data?.get("html") as? String ?: ""
-                val prices = (data?.get("prices") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                val finalUrl = data?.get("url") as? String ?: site.url
+                val products = (data?.get("products") as? List<*>)?.filterIsInstance<Map<*, *>>() ?: emptyList()
+                val pageUrl = data?.get("pageUrl") as? String ?: site.url
                 
-                // Parse prices and create deals
-                val deals = parsePrices(siteName, site, html, prices, finalUrl)
+                // Parse products with their actual URLs
+                val deals = parseProducts(siteName, products, pageUrl)
                 
                 if (deals.isNotEmpty()) {
                     allDeals.addAll(deals)
@@ -248,46 +357,49 @@ class PriceFetchService : Service() {
                 e.printStackTrace()
             }
             
+            // Mark this site as complete and fetch next
+            val completed = completedSites.incrementAndGet()
+            
+            // Clean up this WebView
+            synchronized(webViews) {
+                webViews.remove(webView)
+            }
+            webView?.destroy()
+            
             // Small delay before next site (human-like)
             handler.postDelayed({
-                fetchNextSite()
-            }, 1500)
+                if (completed >= sitesToFetch.size) {
+                    broadcastComplete()
+                    stopSelf()
+                } else {
+                    fetchNextSite()
+                }
+            }, 500) // Shorter delay since we're running parallel
         }
     }
     
-    private fun parsePrices(
+    private fun parseProducts(
         siteName: String,
-        site: CloudflareSite,
-        html: String,
-        extractedPrices: List<String>,
-        url: String
+        products: List<Map<*, *>>,
+        fallbackUrl: String
     ): List<PriceDeal> {
         val deals = mutableListOf<PriceDeal>()
         
-        // Try to parse prices from extracted JS data
-        for (priceText in extractedPrices) {
-            val price = extractPrice(priceText)
-            if (price != null && price > 0 && price < 200) {
-                deals.add(createDeal(siteName, price, url))
-            }
-        }
-        
-        // Fallback: Parse HTML with Jsoup
-        if (deals.isEmpty() && html.isNotEmpty()) {
+        for (product in products) {
             try {
-                val doc = Jsoup.parse(html)
-                doc.select(site.priceSelector).forEach { elem ->
-                    val price = extractPrice(elem.text())
-                    if (price != null && price > 0 && price < 200) {
-                        deals.add(createDeal(siteName, price, url))
-                    }
+                val title = product["title"] as? String ?: "Xbox Game Pass Ultimate"
+                val price = (product["price"] as? Number)?.toDouble() ?: continue
+                val url = product["url"] as? String ?: fallbackUrl
+                
+                if (price > 0 && price < 200 && url.isNotEmpty()) {
+                    deals.add(createDeal(siteName, price, url, title))
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
         
-        return deals.distinctBy { it.price }.take(5)
+        return deals.distinctBy { "${it.price}-${it.url}" }.take(10)
     }
     
     private fun extractPrice(text: String): Double? {
@@ -298,11 +410,30 @@ class PriceFetchService : Service() {
         return match?.groupValues?.get(1)?.toDoubleOrNull()
     }
     
-    private fun createDeal(siteName: String, price: Double, url: String): PriceDeal {
+    private fun createDeal(siteName: String, price: Double, url: String, title: String = "Xbox Game Pass Ultimate"): PriceDeal {
         val currency = when {
             siteName in listOf("Amazon") -> "USD"
             siteName in listOf("GG.deals", "Kinguin", "Gamivo") -> "EUR"
             else -> "USD"
+        }
+        
+        // Detect duration from title
+        val duration = when {
+            title.contains("12", ignoreCase = true) || title.contains("year", ignoreCase = true) -> Duration.TWELVE_MONTHS
+            title.contains("6", ignoreCase = true) -> Duration.SIX_MONTHS
+            title.contains("3", ignoreCase = true) -> Duration.THREE_MONTHS
+            else -> Duration.ONE_MONTH
+        }
+        
+        // Detect region from title or URL
+        val region = when {
+            title.contains("UAE", ignoreCase = true) || url.contains("uae", ignoreCase = true) -> Region.UAE
+            title.contains("Turkey", ignoreCase = true) || title.contains("TR", ignoreCase = true) -> Region.TURKEY
+            title.contains("Argentina", ignoreCase = true) || title.contains("AR", ignoreCase = true) -> Region.ARGENTINA
+            title.contains("Brazil", ignoreCase = true) || title.contains("BR", ignoreCase = true) -> Region.BRAZIL
+            title.contains("US", ignoreCase = true) || title.contains("USA", ignoreCase = true) -> Region.US
+            title.contains("EU", ignoreCase = true) || title.contains("Europe", ignoreCase = true) -> Region.EU
+            else -> Region.GLOBAL
         }
         
         return PriceDeal(
@@ -310,9 +441,9 @@ class PriceFetchService : Service() {
             sellerName = siteName,
             price = price,
             currency = currency,
-            region = Region.GLOBAL,
+            region = region,
             type = DealType.KEY,
-            duration = Duration.ONE_MONTH,
+            duration = duration,
             url = url,
             trustLevel = TrustLevel.HIGH,
             rating = 4.0f,
@@ -372,8 +503,12 @@ class PriceFetchService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
     
     override fun onDestroy() {
-        webView?.destroy()
-        webView = null
+        // Clean up all WebViews
+        synchronized(webViews) {
+            webViews.forEach { it.destroy() }
+            webViews.clear()
+        }
+        handler.removeCallbacksAndMessages(null)
         super.onDestroy()
     }
 }
