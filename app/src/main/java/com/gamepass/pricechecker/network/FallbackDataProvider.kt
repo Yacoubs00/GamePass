@@ -194,9 +194,147 @@ object FallbackDataProvider {
                 type = DealType.ACCOUNT,
                 duration = Duration.ONE_MONTH,
                 url = "https://www.g2a.com/xbox-game-pass-ultimate-account",
-                trustLevel = TrustLevel.CAUTION,
+                trustLevel = TrustLevel.HIGH,
                 rating = 3.5f,
                 reviewCount = 1200
+            ),
+            
+            // New providers
+            PriceDeal(
+                id = "k4g-1m-global",
+                sellerName = "K4G",
+                price = 10.99,
+                currency = "EUR",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = "https://k4g.com/product/xbox-game-pass-ultimate",
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.5f,
+                reviewCount = 3200
+            ),
+            PriceDeal(
+                id = "gameseal-1m-global",
+                sellerName = "GAMESEAL",
+                price = 11.29,
+                currency = "EUR",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = "https://gameseal.com/xbox-game-pass-ultimate",
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.4f,
+                reviewCount = 2100
+            ),
+            PriceDeal(
+                id = "mmoga-1m-eu",
+                sellerName = "MMOGA",
+                price = 12.49,
+                currency = "EUR",
+                region = Region.EU,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = "https://www.mmoga.com/Xbox/Xbox-Game-Pass-Ultimate.html",
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.6f,
+                reviewCount = 8900
+            ),
+            PriceDeal(
+                id = "mtcgame-1m-turkey",
+                sellerName = "MTCGame",
+                price = 6.99,
+                currency = "EUR",
+                region = Region.TURKEY,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = "https://mtcgame.com/xbox-game-pass-ultimate-turkey",
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.3f,
+                reviewCount = 1500
+            ),
+            PriceDeal(
+                id = "wyrel-1m-turkey",
+                sellerName = "Wyrel",
+                price = 6.49,
+                currency = "EUR",
+                region = Region.TURKEY,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = "https://wyrel.com/xbox-game-pass-ultimate-turkey",
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.4f,
+                reviewCount = 980
+            ),
+            PriceDeal(
+                id = "nuuvem-1m-brazil",
+                sellerName = "Nuuvem",
+                price = 5.99,
+                currency = "EUR",
+                region = Region.BRAZIL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = "https://www.nuuvem.com/xbox-game-pass-ultimate-brazil",
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.5f,
+                reviewCount = 2300
+            ),
+            
+            // TRIAL OFFERS (will be filtered out by default)
+            PriceDeal(
+                id = "cdkeys-14d-trial",
+                sellerName = "CDKeys",
+                price = 1.99,
+                currency = "USD",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = "https://www.cdkeys.com/xbox-game-pass-ultimate-14-day-trial",
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.2f,
+                reviewCount = 5600,
+                isTrial = true
+            ),
+            PriceDeal(
+                id = "eneba-7d-trial",
+                sellerName = "Eneba",
+                price = 0.99,
+                currency = "EUR",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = "https://www.eneba.com/xbox-game-pass-ultimate-7-day-trial",
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.0f,
+                reviewCount = 3400,
+                isTrial = true
+            ),
+            PriceDeal(
+                id = "g2a-trial-14d",
+                sellerName = "G2A",
+                price = 1.49,
+                currency = "EUR",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = "https://www.g2a.com/xbox-game-pass-ultimate-14-day-trial",
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.1f,
+                reviewCount = 7800,
+                isTrial = true
+            ),
+            PriceDeal(
+                id = "kinguin-trial",
+                sellerName = "Kinguin",
+                price = 1.29,
+                currency = "EUR",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = "https://www.kinguin.net/xbox-game-pass-ultimate-trial",
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.0f,
+                reviewCount = 2100,
+                isTrial = true
             )
         )
     }
