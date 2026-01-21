@@ -4,9 +4,30 @@ import com.gamepass.pricechecker.models.*
 
 /**
  * Provides fallback/demo data when scraping fails or for testing
- * Also serves as a reference for typical prices
+ * URLs point to search results pages where users can find actual products
  */
 object FallbackDataProvider {
+    
+    // Real search URLs for each seller
+    private object SearchUrls {
+        const val CDKEYS = "https://www.cdkeys.com/catalogsearch/result/?q=xbox+game+pass+ultimate"
+        const val ENEBA = "https://www.eneba.com/store/xbox?text=game%20pass%20ultimate"
+        const val G2A = "https://www.g2a.com/search?query=xbox%20game%20pass%20ultimate"
+        const val KINGUIN = "https://www.kinguin.net/listing?phrase=xbox+game+pass+ultimate"
+        const val GAMIVO = "https://www.gamivo.com/search/xbox%20game%20pass%20ultimate"
+        const val INSTANT_GAMING = "https://www.instant-gaming.com/en/search/?q=xbox+game+pass+ultimate"
+        const val K4G = "https://k4g.com/search?search=xbox+game+pass+ultimate"
+        const val GAMESEAL = "https://gameseal.com/search?q=game+pass+ultimate"
+        const val MMOGA = "https://www.mmoga.com/advanced_search.php?keywords=xbox+game+pass+ultimate"
+        const val DIFMARK = "https://www.difmark.com/search?q=xbox+game+pass+ultimate"
+        const val ALLKEYSHOP = "https://www.allkeyshop.com/blog/buy-xbox-game-pass-ultimate-cd-key-compare-prices/"
+        const val HUMBLE = "https://www.humblebundle.com/store/search?sort=bestselling&search=game%20pass"
+        const val GMG = "https://www.greenmangaming.com/search/?query=xbox%20game%20pass"
+        const val FANATICAL = "https://www.fanatical.com/en/search?search=game%20pass"
+        const val NUUVEM = "https://www.nuuvem.com/catalog/search/game%20pass"
+        const val VOIDU = "https://www.voidu.com/en/search?q=game+pass"
+        const val MICROSOFT = "https://www.xbox.com/en-US/xbox-game-pass/ultimate"
+    }
     
     /**
      * Get sample deals for demonstration/fallback
@@ -23,7 +44,7 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.cdkeys.com/xbox-live/memberships/xbox-game-pass-ultimate-1-month",
+                url = SearchUrls.CDKEYS,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.7f,
                 reviewCount = 15420
@@ -36,7 +57,7 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.THREE_MONTHS,
-                url = "https://www.cdkeys.com/xbox-live/memberships/xbox-game-pass-ultimate-3-months",
+                url = SearchUrls.CDKEYS,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.7f,
                 reviewCount = 8920
@@ -51,7 +72,7 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.eneba.com/xbox-xbox-game-pass-ultimate-1-month",
+                url = SearchUrls.ENEBA,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.5f,
                 reviewCount = 12300
@@ -64,7 +85,7 @@ object FallbackDataProvider {
                 region = Region.TURKEY,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.eneba.com/xbox-xbox-game-pass-ultimate-1-month-turkey",
+                url = SearchUrls.ENEBA,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.4f,
                 reviewCount = 5670
@@ -79,7 +100,7 @@ object FallbackDataProvider {
                 region = Region.EU,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.instant-gaming.com/en/xbox-game-pass-ultimate/",
+                url = SearchUrls.INSTANT_GAMING,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.6f,
                 reviewCount = 9800
@@ -94,8 +115,8 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.kinguin.net/xbox-game-pass-ultimate",
-                trustLevel = TrustLevel.MEDIUM,
+                url = SearchUrls.KINGUIN,
+                trustLevel = TrustLevel.HIGH,
                 rating = 4.2f,
                 reviewCount = 7650
             ),
@@ -107,13 +128,13 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.THREE_MONTHS,
-                url = "https://www.kinguin.net/xbox-game-pass-ultimate-3-months",
-                trustLevel = TrustLevel.MEDIUM,
+                url = SearchUrls.KINGUIN,
+                trustLevel = TrustLevel.HIGH,
                 rating = 4.1f,
                 reviewCount = 3420
             ),
             
-            // G2A (with caution)
+            // G2A
             PriceDeal(
                 id = "g2a-1m-global",
                 sellerName = "G2A",
@@ -122,9 +143,9 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.g2a.com/xbox-game-pass-ultimate",
-                trustLevel = TrustLevel.CAUTION,
-                rating = 4.0f,
+                url = SearchUrls.G2A,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.5f,
                 reviewCount = 25000
             ),
             PriceDeal(
@@ -135,9 +156,9 @@ object FallbackDataProvider {
                 region = Region.BRAZIL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.g2a.com/xbox-game-pass-ultimate-brazil",
-                trustLevel = TrustLevel.CAUTION,
-                rating = 3.9f,
+                url = SearchUrls.G2A,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.4f,
                 reviewCount = 4200
             ),
             
@@ -150,8 +171,8 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.gamivo.com/product/xbox-game-pass-ultimate-1-month",
-                trustLevel = TrustLevel.MEDIUM,
+                url = SearchUrls.GAMIVO,
+                trustLevel = TrustLevel.HIGH,
                 rating = 4.3f,
                 reviewCount = 6780
             ),
@@ -165,10 +186,23 @@ object FallbackDataProvider {
                 region = Region.UAE,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.eneba.com/xbox-xbox-game-pass-ultimate-1-month-uae",
+                url = SearchUrls.ENEBA,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.5f,
                 reviewCount = 890
+            ),
+            PriceDeal(
+                id = "g2a-1m-uae",
+                sellerName = "G2A",
+                price = 42.00,
+                currency = "AED",
+                region = Region.UAE,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.G2A,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.4f,
+                reviewCount = 650
             ),
             PriceDeal(
                 id = "cdkeys-3m-uae",
@@ -178,28 +212,28 @@ object FallbackDataProvider {
                 region = Region.UAE,
                 type = DealType.KEY,
                 duration = Duration.THREE_MONTHS,
-                url = "https://www.cdkeys.com/xbox-game-pass-ultimate-3-months-uae",
+                url = SearchUrls.CDKEYS,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.6f,
                 reviewCount = 450
             ),
             
-            // Account type deals (some sellers offer these)
+            // AllKeyShop (Aggregator)
             PriceDeal(
-                id = "g2a-1m-account",
-                sellerName = "G2A",
-                price = 4.99,
+                id = "allkeyshop-1m-global",
+                sellerName = "AllKeyShop",
+                price = 9.50,
                 currency = "EUR",
                 region = Region.GLOBAL,
-                type = DealType.ACCOUNT,
+                type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.g2a.com/xbox-game-pass-ultimate-account",
+                url = SearchUrls.ALLKEYSHOP,
                 trustLevel = TrustLevel.HIGH,
-                rating = 3.5f,
-                reviewCount = 1200
+                rating = 4.6f,
+                reviewCount = 50000
             ),
             
-            // New providers
+            // K4G
             PriceDeal(
                 id = "k4g-1m-global",
                 sellerName = "K4G",
@@ -208,11 +242,13 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://k4g.com/product/xbox-game-pass-ultimate",
+                url = SearchUrls.K4G,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.5f,
                 reviewCount = 3200
             ),
+            
+            // GAMESEAL
             PriceDeal(
                 id = "gameseal-1m-global",
                 sellerName = "GAMESEAL",
@@ -221,11 +257,13 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://gameseal.com/xbox-game-pass-ultimate",
+                url = SearchUrls.GAMESEAL,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.4f,
                 reviewCount = 2100
             ),
+            
+            // MMOGA
             PriceDeal(
                 id = "mmoga-1m-eu",
                 sellerName = "MMOGA",
@@ -234,49 +272,68 @@ object FallbackDataProvider {
                 region = Region.EU,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.mmoga.com/Xbox/Xbox-Game-Pass-Ultimate.html",
+                url = SearchUrls.MMOGA,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.6f,
                 reviewCount = 8900
             ),
+            
+            // Difmark - Turkey specialist
             PriceDeal(
-                id = "mtcgame-1m-turkey",
-                sellerName = "MTCGame",
+                id = "difmark-1m-turkey",
+                sellerName = "Difmark",
                 price = 6.99,
                 currency = "EUR",
                 region = Region.TURKEY,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://mtcgame.com/xbox-game-pass-ultimate-turkey",
+                url = SearchUrls.DIFMARK,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.3f,
                 reviewCount = 1500
             ),
             PriceDeal(
-                id = "wyrel-1m-turkey",
-                sellerName = "Wyrel",
-                price = 6.49,
-                currency = "EUR",
-                region = Region.TURKEY,
-                type = DealType.KEY,
-                duration = Duration.ONE_MONTH,
-                url = "https://wyrel.com/xbox-game-pass-ultimate-turkey",
-                trustLevel = TrustLevel.HIGH,
-                rating = 4.4f,
-                reviewCount = 980
-            ),
-            PriceDeal(
-                id = "nuuvem-1m-brazil",
-                sellerName = "Nuuvem",
+                id = "difmark-1m-brazil",
+                sellerName = "Difmark",
                 price = 5.99,
                 currency = "EUR",
                 region = Region.BRAZIL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.nuuvem.com/xbox-game-pass-ultimate-brazil",
+                url = SearchUrls.DIFMARK,
                 trustLevel = TrustLevel.HIGH,
-                rating = 4.5f,
-                reviewCount = 2300
+                rating = 4.3f,
+                reviewCount = 980
+            ),
+            
+            // Humble Bundle
+            PriceDeal(
+                id = "humble-1m-global",
+                sellerName = "Humble Bundle",
+                price = 14.99,
+                currency = "USD",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.HUMBLE,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.8f,
+                reviewCount = 15000
+            ),
+            
+            // Green Man Gaming
+            PriceDeal(
+                id = "gmg-1m-global",
+                sellerName = "Green Man Gaming",
+                price = 13.99,
+                currency = "USD",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.GMG,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.7f,
+                reviewCount = 12000
             ),
             
             // TRIAL OFFERS (will be filtered out by default)
@@ -288,7 +345,7 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.cdkeys.com/xbox-game-pass-ultimate-14-day-trial",
+                url = SearchUrls.CDKEYS,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.2f,
                 reviewCount = 5600,
@@ -302,7 +359,7 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.eneba.com/xbox-game-pass-ultimate-7-day-trial",
+                url = SearchUrls.ENEBA,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.0f,
                 reviewCount = 3400,
@@ -316,7 +373,7 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.g2a.com/xbox-game-pass-ultimate-14-day-trial",
+                url = SearchUrls.G2A,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.1f,
                 reviewCount = 7800,
@@ -330,7 +387,7 @@ object FallbackDataProvider {
                 region = Region.GLOBAL,
                 type = DealType.KEY,
                 duration = Duration.ONE_MONTH,
-                url = "https://www.kinguin.net/xbox-game-pass-ultimate-trial",
+                url = SearchUrls.KINGUIN,
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.0f,
                 reviewCount = 2100,
@@ -363,7 +420,7 @@ object FallbackDataProvider {
             region = region,
             type = DealType.KEY,
             duration = Duration.ONE_MONTH,
-            url = "https://www.xbox.com/en-US/xbox-game-pass",
+            url = SearchUrls.MICROSOFT,
             trustLevel = TrustLevel.HIGH,
             rating = 5.0f,
             reviewCount = 0
