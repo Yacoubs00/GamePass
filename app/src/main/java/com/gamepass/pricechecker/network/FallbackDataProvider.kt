@@ -628,6 +628,55 @@ object FallbackDataProvider {
     }
     
     /**
+     * Get fallback deals for a specific seller
+     * Used when scraping fails for that seller
+     */
+    fun getDealsForSeller(sellerName: String): List<PriceDeal> {
+        return getSampleDeals().filter { 
+            it.sellerName.equals(sellerName, ignoreCase = true) 
+        }
+    }
+    
+    /**
+     * Get the search URL for a specific seller
+     */
+    fun getSearchUrl(sellerName: String): String {
+        return when (sellerName.lowercase()) {
+            "cdkeys" -> SearchUrls.CDKEYS
+            "eneba" -> SearchUrls.ENEBA
+            "g2a" -> SearchUrls.G2A
+            "instant gaming" -> SearchUrls.INSTANT_GAMING
+            "k4g" -> SearchUrls.K4G
+            "mmoga" -> SearchUrls.MMOGA
+            "humble bundle" -> SearchUrls.HUMBLE
+            "green man gaming" -> SearchUrls.GMG
+            "fanatical" -> SearchUrls.FANATICAL
+            "nuuvem" -> SearchUrls.NUUVEM
+            "voidu" -> SearchUrls.VOIDU
+            "driffle" -> SearchUrls.DRIFFLE
+            "mtcgame" -> SearchUrls.MTCGAME
+            "wyrel" -> SearchUrls.WYREL
+            "gamers outlet" -> SearchUrls.GAMERSOUTLET
+            "scdkey" -> SearchUrls.SCDKEY
+            "gameseal" -> SearchUrls.GAMESEAL
+            "difmark" -> SearchUrls.DIFMARK
+            "microsoft" -> SearchUrls.MICROSOFT
+            "gamesplanet" -> SearchUrls.GAMESPLANET
+            "amazon" -> SearchUrls.AMAZON
+            "g2play" -> SearchUrls.G2PLAY
+            "kinguin" -> SearchUrls.KINGUIN
+            "gamivo" -> SearchUrls.GAMIVO
+            "gg.deals" -> SearchUrls.GGDEALS
+            "hrk game" -> SearchUrls.HRKGAME
+            "2game" -> SearchUrls.TWOGAME
+            "play-asia" -> SearchUrls.PLAYASIA
+            "gamestop" -> SearchUrls.GAMESTOP
+            "allkeyshop" -> SearchUrls.ALLKEYSHOP
+            else -> "https://www.google.com/search?q=$sellerName+xbox+game+pass+ultimate"
+        }
+    }
+    
+    /**
      * Get the official Microsoft price for reference
      */
     fun getOfficialPrice(region: Region): PriceDeal {
