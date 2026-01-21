@@ -67,9 +67,9 @@ object Sellers {
         id = "g2a",
         name = "G2A",
         website = "https://www.g2a.com",
-        trustLevel = TrustLevel.CAUTION,
-        description = "Large marketplace - use G2A Shield for protection",
-        features = listOf("Huge selection", "Use G2A Shield", "Check seller ratings")
+        trustLevel = TrustLevel.HIGH,
+        description = "Large trusted marketplace with buyer protection",
+        features = listOf("Huge selection", "G2A Shield protection", "Great prices")
     )
     
     val HumbleBundle = Seller(
@@ -85,9 +85,63 @@ object Sellers {
         id = "gamivo",
         name = "Gamivo",
         website = "https://www.gamivo.com",
-        trustLevel = TrustLevel.MEDIUM,
+        trustLevel = TrustLevel.HIGH,
         description = "Marketplace with Smart subscription benefits",
         features = listOf("Smart subscription", "Buyer protection", "Good prices")
+    )
+    
+    val GGDeals = Seller(
+        id = "ggdeals",
+        name = "GG.deals",
+        website = "https://gg.deals",
+        trustLevel = TrustLevel.HIGH,
+        description = "Price aggregator with historical data",
+        features = listOf("Price tracking", "Deal alerts", "Price history")
+    )
+    
+    val Difmark = Seller(
+        id = "difmark",
+        name = "Difmark",
+        website = "https://www.difmark.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Great for regional keys (Turkey, Brazil, Argentina)",
+        features = listOf("Regional keys", "Good prices", "Fast delivery")
+    )
+    
+    val HRKGame = Seller(
+        id = "hrkgame",
+        name = "HRK Game",
+        website = "https://www.hrkgame.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "European retailer with competitive prices",
+        features = listOf("EU-based", "Good prices", "Reliable")
+    )
+    
+    val Gamesplanet = Seller(
+        id = "gamesplanet",
+        name = "Gamesplanet",
+        website = "https://www.gamesplanet.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "UK/EU authorized retailer",
+        features = listOf("Authorized reseller", "Star deals", "Trustworthy")
+    )
+    
+    val SCDKey = Seller(
+        id = "scdkey",
+        name = "SCDKey",
+        website = "https://www.scdkey.com",
+        trustLevel = TrustLevel.MEDIUM,
+        description = "Budget-friendly key seller",
+        features = listOf("Low prices", "Various regions", "Quick delivery")
+    )
+    
+    val Cdkeys_com = Seller(
+        id = "cdkeyscom",
+        name = "CDKeys.com",
+        website = "https://www.cdkeys.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Popular trusted retailer",
+        features = listOf("Instant delivery", "Great prices", "Reliable")
     )
     
     /**
@@ -95,7 +149,8 @@ object Sellers {
      */
     fun getAll(): List<Seller> = listOf(
         CDKeys, Eneba, InstantGaming, GreenManGaming, 
-        Kinguin, G2A, HumbleBundle, Gamivo
+        Kinguin, G2A, HumbleBundle, Gamivo,
+        GGDeals, Difmark, HRKGame, Gamesplanet, SCDKey
     )
     
     /**
