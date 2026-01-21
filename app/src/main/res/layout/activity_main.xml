@@ -114,9 +114,20 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="✅ Trusted Only"
-                    android:textColor="@color/text_primary"
-                    app:chipBackgroundColor="@color/background_secondary"
+                    android:textColor="?android:textColorPrimary"
+                    app:chipBackgroundColor="?android:colorBackground"
                     android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipExcludeTrials"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🚫 No Trials"
+                    android:textColor="?android:textColorPrimary"
+                    app:chipBackgroundColor="?android:colorBackground"
+                    android:checkable="true"
+                    android:checked="true" />
 
             </com.google.android.material.chip.ChipGroup>
 
