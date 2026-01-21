@@ -226,6 +226,24 @@ class PriceFetchService : Service() {
             }
             
             webView.loadUrl(site.url)
+            
+            // Timeout after 20 seconds per site
+            handler.postDelayed({
+                // If this WebView is still active, force complete and move on
+                synchronized(webViews) {
+                    if (webViews.contains(webView)) {
+                        webViews.remove(webView)
+                        webView.destroy()
+                        val completed = completedSites.incrementAndGet()
+                        if (completed >= sitesToFetch.size) {
+                            broadcastComplete()
+                            stopSelf()
+                        } else if (currentSiteIndex.get() < sitesToFetch.size) {
+                            fetchNextSite()
+                        }
+                    }
+                }
+            }, 20000)
         } catch (e: Exception) {
             // WebView creation failed (can happen on some devices/Android versions)
             e.printStackTrace()
@@ -238,26 +256,7 @@ class PriceFetchService : Service() {
                     fetchNextSite()
                 }
             }
-            return
         }
-        
-        // Timeout after 20 seconds per site
-        handler.postDelayed({
-            // If this WebView is still active, force complete and move on
-            synchronized(webViews) {
-                if (webViews.contains(webView)) {
-                    webViews.remove(webView)
-                    webView.destroy()
-                    val completed = completedSites.incrementAndGet()
-                    if (completed >= sitesToFetch.size) {
-                        broadcastComplete()
-                        stopSelf()
-                    } else if (currentSiteIndex.get() < sitesToFetch.size) {
-                        fetchNextSite()
-                    }
-                }
-            }
-        }, 20000)
     }
     
     private fun extractPrices(webView: WebView?, siteName: String, site: CloudflareSite) {
