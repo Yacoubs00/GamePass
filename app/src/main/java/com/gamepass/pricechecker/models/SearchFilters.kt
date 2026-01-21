@@ -8,7 +8,8 @@ data class SearchFilters(
     val type: DealType = DealType.ALL,
     val duration: Duration = Duration.ALL,
     val sortBy: SortOption = SortOption.PRICE_LOW,
-    val trustedOnly: Boolean = false
+    val trustedOnly: Boolean = false,
+    val excludeTrials: Boolean = true  // Exclude trials by default
 ) {
     /**
      * Check if a deal matches these filters
@@ -31,6 +32,11 @@ data class SearchFilters(
         
         // Trusted only filter
         if (trustedOnly && deal.trustLevel != TrustLevel.HIGH) {
+            return false
+        }
+        
+        // Exclude trials filter
+        if (excludeTrials && deal.isTrial) {
             return false
         }
         
