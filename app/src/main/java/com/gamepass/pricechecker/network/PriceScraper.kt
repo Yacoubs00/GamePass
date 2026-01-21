@@ -7,6 +7,62 @@ import org.jsoup.nodes.Document
 import java.util.UUID
 
 /**
+ * Search query variants and matching utilities
+ */
+object GamePassSearchUtils {
+    
+    // All search query variants for different sites
+    val searchQueries = listOf(
+        "xbox+game+pass+ultimate",
+        "xbox+gamepass+ultimate",
+        "game+pass+ultimate",
+        "gamepass+ultimate",
+        "xbox+gpu"
+    )
+    
+    // Keywords that indicate it's a Game Pass Ultimate product
+    private val requiredKeywords = listOf("ultimate")
+    private val gamePassKeywords = listOf("game pass", "gamepass", "game+pass")
+    
+    // Keywords that indicate it's a trial (to mark as trial)
+    val trialKeywords = listOf("trial", "14 day", "14-day", "7 day", "7-day", "3 day", "1 day")
+    
+    /**
+     * Check if a product title is a valid Game Pass Ultimate product
+     */
+    fun isValidGamePassUltimate(title: String): Boolean {
+        val lowerTitle = title.lowercase()
+        
+        // Must contain "ultimate"
+        if (!requiredKeywords.any { lowerTitle.contains(it) }) {
+            return false
+        }
+        
+        // Must contain some form of "game pass"
+        if (!gamePassKeywords.any { lowerTitle.contains(it) }) {
+            return false
+        }
+        
+        return true
+    }
+    
+    /**
+     * Check if the product is a trial
+     */
+    fun isTrial(title: String): Boolean {
+        val lowerTitle = title.lowercase()
+        return trialKeywords.any { lowerTitle.contains(it) }
+    }
+    
+    /**
+     * Get the best search URL for a given base URL pattern
+     */
+    fun getSearchUrl(basePattern: String): String {
+        return basePattern.replace("{query}", searchQueries.first())
+    }
+}
+
+/**
  * Main price scraper that aggregates results from multiple sources
  */
 class PriceScraper {
@@ -185,8 +241,8 @@ class CDKeysScraper : BaseScraper {
                     try {
                         val title = item.select(".product-item-name").text()
                         
-                        // Only include Game Pass Ultimate products
-                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        // Only include valid Game Pass Ultimate products
+                        if (!GamePassSearchUtils.isValidGamePassUltimate(title)) return@forEach
                         
                         val priceText = item.select(".price").first()?.text()
                             ?.replace("[^0-9.,]".toRegex(), "")
@@ -206,7 +262,8 @@ class CDKeysScraper : BaseScraper {
                             type = DealType.KEY,
                             duration = duration,
                             url = link.ifEmpty { "https://www.cdkeys.com" },
-                            trustLevel = TrustLevel.HIGH
+                            trustLevel = TrustLevel.HIGH,
+                            isTrial = GamePassSearchUtils.isTrial(title)
                         ))
                     } catch (e: Exception) {
                         // Skip malformed entries
@@ -262,7 +319,7 @@ class EnebaScraper : BaseScraper {
                     try {
                         val title = card.select("[data-component='ProductCardTitle']").text()
                         
-                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        if (!GamePassSearchUtils.isValidGamePassUltimate(title)) return@forEach
                         
                         val priceText = card.select("[data-component='Price']").text()
                             .replace("[^0-9.,]".toRegex(), "")
@@ -334,7 +391,7 @@ class G2AScraper : BaseScraper {
                     try {
                         val title = card.select("[data-testid='ProductCard-title']").text()
                         
-                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        if (!GamePassSearchUtils.isValidGamePassUltimate(title)) return@forEach
                         
                         val priceText = card.select("[data-testid='ProductCard-price']").text()
                             .replace("[^0-9.,]".toRegex(), "")
@@ -403,7 +460,7 @@ class InstantGamingScraper : BaseScraper {
                 doc.select(".item").forEach { item ->
                     try {
                         val title = item.select(".title").text()
-                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        if (!GamePassSearchUtils.isValidGamePassUltimate(title)) return@forEach
                         val priceText = item.select(".price").text()
                             .replace("[^0-9.,]".toRegex(), "").replace(",", ".")
                         val price = priceText.toDoubleOrNull() ?: return@forEach
@@ -438,7 +495,7 @@ class KinguinScraper : BaseScraper {
                 doc.select("[data-product-card]").forEach { card ->
                     try {
                         val title = card.select("[data-product-name]").text()
-                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        if (!GamePassSearchUtils.isValidGamePassUltimate(title)) return@forEach
                         val priceText = card.select("[data-product-price]").text()
                             .replace("[^0-9.,]".toRegex(), "").replace(",", ".")
                         val price = priceText.toDoubleOrNull() ?: return@forEach
@@ -473,7 +530,7 @@ class GamivoScraper : BaseScraper {
                 doc.select(".product-card").forEach { card ->
                     try {
                         val title = card.select(".product-card__title").text()
-                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        if (!GamePassSearchUtils.isValidGamePassUltimate(title)) return@forEach
                         val priceText = card.select(".product-card__price").text()
                             .replace("[^0-9.,]".toRegex(), "").replace(",", ".")
                         val price = priceText.toDoubleOrNull() ?: return@forEach
@@ -508,7 +565,7 @@ class DifmarkScraper : BaseScraper {
                 doc.select(".product-item").forEach { item ->
                     try {
                         val title = item.select(".product-title").text()
-                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        if (!GamePassSearchUtils.isValidGamePassUltimate(title)) return@forEach
                         val priceText = item.select(".price").text()
                             .replace("[^0-9.,]".toRegex(), "").replace(",", ".")
                         val price = priceText.toDoubleOrNull() ?: return@forEach
