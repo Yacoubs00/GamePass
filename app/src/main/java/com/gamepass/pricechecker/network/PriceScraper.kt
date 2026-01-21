@@ -65,8 +65,19 @@ object GamePassSearchUtils {
 }
 
 /**
+ * Progress callback for streaming search results
+ */
+data class SearchProgress(
+    val currentSite: String,
+    val sitesSearched: Int,
+    val totalSites: Int,
+    val dealsFound: Int
+)
+
+/**
  * Main price scraper that aggregates results from multiple sources
  * Uses WebView for Cloudflare-protected sites
+ * Supports streaming results with progress callbacks
  */
 class PriceScraper(private val context: Context? = null) {
     
@@ -75,19 +86,132 @@ class PriceScraper(private val context: Context? = null) {
         context?.let { WebViewScraper(it) }
     }
     
-    private val scrapers = listOf(
-        AllKeyShopScraper(),
-        CDKeysScraper(),
-        EnebaScraper(),
-        G2AScraper(),
-        InstantGamingScraper(),
-        KinguinScraper(),
-        GamivoScraper(),
-        DifmarkScraper()
+    // All scrapers with their display names
+    private val scraperInfoList = listOf(
+        "CDKeys" to CDKeysScraper(),
+        "Eneba" to EnebaScraper(),
+        "G2A" to G2AScraper(),
+        "Instant Gaming" to InstantGamingScraper(),
+        "Kinguin" to KinguinScraper(),
+        "Gamivo" to GamivoScraper(),
+        "Difmark" to DifmarkScraper(),
+        "AllKeyShop" to AllKeyShopScraper()
     )
     
+    private val scrapers = scraperInfoList.map { it.second }
+    
     /**
-     * Search all sources for Game Pass Ultimate deals
+     * Search all sources with streaming results and progress updates
+     * Results appear as they are found and auto-sorted by price
+     */
+    suspend fun searchAllStreaming(
+        filters: SearchFilters,
+        onProgress: (SearchProgress) -> Unit,
+        onDealsFound: (List<PriceDeal>) -> Unit
+    ): SearchResult {
+        return withContext(Dispatchers.IO) {
+            val startTime = System.currentTimeMillis()
+            val allDeals = mutableListOf<PriceDeal>()
+            var sitesSearched = 0
+            val totalSites = scraperInfoList.size
+            
+            try {
+                // Search each site sequentially to show progress
+                // But run some in parallel batches for speed
+                val batchSize = 3
+                val batches = scraperInfoList.chunked(batchSize)
+                
+                for (batch in batches) {
+                    // Run batch in parallel
+                    val batchResults = batch.map { (name, scraper) ->
+                        async {
+                            // Update progress before starting
+                            withContext(Dispatchers.Main) {
+                                onProgress(SearchProgress(
+                                    currentSite = name,
+                                    sitesSearched = sitesSearched,
+                                    totalSites = totalSites,
+                                    dealsFound = allDeals.size
+                                ))
+                            }
+                            
+                            try {
+                                val deals = scraper.scrape(filters)
+                                    .filter { filters.matches(it) }
+                                name to deals
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                name to emptyList()
+                            }
+                        }
+                    }.awaitAll()
+                    
+                    // Process batch results
+                    for ((name, deals) in batchResults) {
+                        sitesSearched++
+                        
+                        if (deals.isNotEmpty()) {
+                            // Add new deals
+                            allDeals.addAll(deals)
+                            
+                            // Sort by price and remove duplicates
+                            val sortedDeals = allDeals
+                                .distinctBy { "${it.sellerName}-${it.region}-${it.duration}" }
+                                .sortedWith(compareBy(
+                                    { if (it.region == Region.UAE || it.region == Region.GLOBAL) 0 else 1 },
+                                    { it.price }
+                                ))
+                            
+                            allDeals.clear()
+                            allDeals.addAll(sortedDeals)
+                            
+                            // Emit updated results to UI
+                            withContext(Dispatchers.Main) {
+                                onDealsFound(allDeals.toList())
+                                onProgress(SearchProgress(
+                                    currentSite = "Found ${deals.size} from $name",
+                                    sitesSearched = sitesSearched,
+                                    totalSites = totalSites,
+                                    dealsFound = allDeals.size
+                                ))
+                            }
+                        } else {
+                            // Update progress even if no deals found
+                            withContext(Dispatchers.Main) {
+                                onProgress(SearchProgress(
+                                    currentSite = "$name (no results)",
+                                    sitesSearched = sitesSearched,
+                                    totalSites = totalSites,
+                                    dealsFound = allDeals.size
+                                ))
+                            }
+                        }
+                    }
+                    
+                    // Small delay between batches for UI updates
+                    delay(100)
+                }
+                
+                val searchTime = System.currentTimeMillis() - startTime
+                
+                if (allDeals.isEmpty()) {
+                    SearchResult.Empty
+                } else {
+                    SearchResult.Success(
+                        deals = allDeals,
+                        totalFound = allDeals.size,
+                        searchTimeMs = searchTime,
+                        sourcesSearched = sitesSearched
+                    )
+                }
+            } catch (e: Exception) {
+                SearchResult.Error("Failed to fetch prices: ${e.message}", e)
+            }
+        }
+    }
+    
+    /**
+     * Legacy method - Search all sources for Game Pass Ultimate deals
      */
     suspend fun searchAll(filters: SearchFilters): SearchResult {
         return withContext(Dispatchers.IO) {
