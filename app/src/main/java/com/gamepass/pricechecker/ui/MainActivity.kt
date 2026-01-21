@@ -235,26 +235,31 @@ class MainActivity : AppCompatActivity() {
                 val result = priceScraper.searchAllStreaming(
                     filters = currentFilters,
                     onProgress = { progress ->
-                        // Update progress UI (already on main thread from PriceScraper)
-                        tvCurrentSite.text = "Searching ${progress.currentSite}..."
-                        tvFoundCount.text = "${progress.dealsFound} found"
-                        tvProgressStatus.text = "${progress.sitesSearched} of ${progress.totalSites} sites searched"
-                        
-                        // Update progress bar
-                        val progressPercent = if (progress.totalSites > 0) {
-                            (progress.sitesSearched * 100) / progress.totalSites
-                        } else 0
-                        progressBar.setProgressCompat(progressPercent, true)
+                        // Update progress UI - must run on UI thread
+                        runOnUiThread {
+                            tvCurrentSite.text = "Searching ${progress.currentSite}..."
+                            tvFoundCount.text = "${progress.dealsFound} found"
+                            tvProgressStatus.text = "${progress.sitesSearched} of ${progress.totalSites} sites searched"
+                            
+                            // Update progress bar
+                            val progressPercent = if (progress.totalSites > 0) {
+                                (progress.sitesSearched * 100) / progress.totalSites
+                            } else 0
+                            progressBar.setProgressCompat(progressPercent, true)
+                        }
                     },
                     onDealsFound = { deals ->
                         // Stream results to UI as they arrive (already sorted by PriceScraper)
-                        if (deals.isNotEmpty()) {
-                            dealsAdapter.submitList(deals.toList())
-                            recyclerDeals.visibility = View.VISIBLE
-                            
-                            // Update result count
-                            tvResultCount.text = "${deals.size} deals"
-                            tvResultCount.visibility = View.VISIBLE
+                        // Must run on UI thread for RecyclerView updates
+                        runOnUiThread {
+                            if (deals.isNotEmpty()) {
+                                dealsAdapter.submitList(deals.toList())
+                                recyclerDeals.visibility = View.VISIBLE
+                                
+                                // Update result count
+                                tvResultCount.text = "${deals.size} deals"
+                                tvResultCount.visibility = View.VISIBLE
+                            }
                         }
                     }
                 )
