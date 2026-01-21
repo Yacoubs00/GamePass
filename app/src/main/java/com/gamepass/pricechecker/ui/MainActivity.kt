@@ -1,6 +1,7 @@
 package com.gamepass.pricechecker.ui
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
@@ -48,8 +49,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chipTrustLevel: Chip
     private lateinit var chipExcludeTrials: Chip
     
-    // Theme toggle
+    // Theme toggle and info button
     private lateinit var btnThemeToggle: ImageButton
+    private lateinit var btnInfo: ImageButton
 
     // Adapter and data
     private lateinit var dealsAdapter: DealsAdapter
@@ -134,6 +136,9 @@ class MainActivity : AppCompatActivity() {
         // Theme toggle button
         btnThemeToggle = findViewById(R.id.btnThemeToggle)
         
+        // Info button
+        btnInfo = findViewById(R.id.btnInfo)
+        
         // Style the swipe refresh
         swipeRefresh.setColorSchemeResources(R.color.xbox_green)
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.background_secondary)
@@ -166,6 +171,11 @@ class MainActivity : AppCompatActivity() {
         // Theme toggle
         btnThemeToggle.setOnClickListener {
             toggleTheme()
+        }
+        
+        // Info button - open Trust Level info page
+        btnInfo.setOnClickListener {
+            startActivity(Intent(this, TrustInfoActivity::class.java))
         }
 
         // Region filter chip
