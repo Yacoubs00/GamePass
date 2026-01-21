@@ -1180,8 +1180,8 @@ class MicrosoftScraper : BaseScraper {
                     if (price > 0 && price < 200) {
                         deals.add(PriceDeal(
                             id = generateId(), sellerName = "Microsoft", price = price, currency = "USD",
-                            region = Region.US, type = DealType.SUBSCRIPTION, duration = Duration.ONE_MONTH,
-                            url = url, trustLevel = TrustLevel.OFFICIAL
+                            region = Region.US, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
                         ))
                     }
                 }
