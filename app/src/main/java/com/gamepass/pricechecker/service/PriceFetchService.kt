@@ -122,7 +122,8 @@ class PriceFetchService : Service() {
     )
     
     private val webViews = mutableListOf<WebView>()
-    private val handler = Handler(Looper.getMainLooper())
+    private var handler: Handler? = Handler(Looper.getMainLooper())
+    private var isServiceRunning = true
     private var sitesToFetch = mutableListOf<String>()
     private var currentSiteIndex = AtomicInteger(0)
     private var completedSites = AtomicInteger(0)
@@ -157,7 +158,7 @@ class PriceFetchService : Service() {
                 
                 if (sitesToFetch.isNotEmpty()) {
                     // Start multiple parallel WebViews
-                    handler.post { startParallelFetching() }
+                    handler?.post { startParallelFetching() }
                 } else {
                     stopSelf()
                 }
@@ -205,6 +206,7 @@ class PriceFetchService : Service() {
                 
                 webViewClient = object : BypassClient() {
                     private var pageLoaded = false
+                    private val localHandler = this@PriceFetchService.handler
                     
                     override fun onPageFinishedByPassed(view: WebView?, url: String?) {
                         super.onPageFinishedByPassed(view, url)
@@ -213,7 +215,7 @@ class PriceFetchService : Service() {
                         pageLoaded = true
                         
                         // Wait for JS to render content
-                        handler.postDelayed({
+                        localHandler?.postDelayed({
                             extractPrices(view, siteName, site)
                         }, 3000) // 3 second delay for JS rendering
                     }
@@ -228,7 +230,7 @@ class PriceFetchService : Service() {
             webView.loadUrl(site.url)
             
             // Timeout after 20 seconds per site
-            handler.postDelayed({
+            handler?.postDelayed({
                 // If this WebView is still active, force complete and move on
                 synchronized(webViews) {
                     if (webViews.contains(webView)) {
@@ -248,7 +250,7 @@ class PriceFetchService : Service() {
             // WebView creation failed (can happen on some devices/Android versions)
             e.printStackTrace()
             val completed = completedSites.incrementAndGet()
-            handler.post {
+            handler?.post {
                 if (completed >= sitesToFetch.size) {
                     broadcastComplete()
                     stopSelf()
@@ -382,7 +384,7 @@ class PriceFetchService : Service() {
             webView?.destroy()
             
             // Small delay before next site (human-like)
-            handler.postDelayed({
+            handler?.postDelayed({
                 if (completed >= sitesToFetch.size) {
                     broadcastComplete()
                     stopSelf()
@@ -518,12 +520,14 @@ class PriceFetchService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
     
     override fun onDestroy() {
+        isServiceRunning = false
         // Clean up all WebViews
         synchronized(webViews) {
             webViews.forEach { it.destroy() }
             webViews.clear()
         }
-        handler.removeCallbacksAndMessages(null)
+        handler?.removeCallbacksAndMessages(null)
+        handler = null
         super.onDestroy()
     }
 }
