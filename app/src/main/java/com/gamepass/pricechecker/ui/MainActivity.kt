@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
 
     // Adapter and data
     private lateinit var dealsAdapter: DealsAdapter
-    private val priceScraper = PriceScraper()
+    private lateinit var priceScraper: PriceScraper
     
     // Theme preferences
     private val PREFS_NAME = "GamePassPrefs"
@@ -75,6 +75,9 @@ class MainActivity : AppCompatActivity() {
         
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Initialize price scraper with context for WebView support
+        priceScraper = PriceScraper(this)
 
         initViews()
         setupRecyclerView()
