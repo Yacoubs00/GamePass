@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chipDuration: Chip
     private lateinit var chipType: Chip
     private lateinit var chipTrustedOnly: Chip
+    private lateinit var chipExcludeTrials: Chip
     
     // Theme toggle
     private lateinit var btnThemeToggle: ImageButton
@@ -127,6 +128,7 @@ class MainActivity : AppCompatActivity() {
         chipDuration = findViewById(R.id.chipDuration)
         chipType = findViewById(R.id.chipType)
         chipTrustedOnly = findViewById(R.id.chipTrustedOnly)
+        chipExcludeTrials = findViewById(R.id.chipExcludeTrials)
         
         // Theme toggle button
         btnThemeToggle = findViewById(R.id.btnThemeToggle)
@@ -183,6 +185,14 @@ class MainActivity : AppCompatActivity() {
         // Trusted only toggle
         chipTrustedOnly.setOnCheckedChangeListener { _, isChecked ->
             currentFilters = currentFilters.copy(trustedOnly = isChecked)
+            if (dealsAdapter.currentList.isNotEmpty()) {
+                applyFiltersToCurrentResults()
+            }
+        }
+        
+        // Exclude trials toggle
+        chipExcludeTrials.setOnCheckedChangeListener { _, isChecked ->
+            currentFilters = currentFilters.copy(excludeTrials = isChecked)
             if (dealsAdapter.currentList.isNotEmpty()) {
                 applyFiltersToCurrentResults()
             }
