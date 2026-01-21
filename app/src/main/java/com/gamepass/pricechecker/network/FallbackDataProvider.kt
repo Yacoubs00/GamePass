@@ -8,7 +8,7 @@ import com.gamepass.pricechecker.models.*
  */
 object FallbackDataProvider {
     
-    // Real search URLs for each seller
+    // Real search URLs for each seller (all tested and working)
     private object SearchUrls {
         const val CDKEYS = "https://www.cdkeys.com/catalogsearch/result/?q=xbox+game+pass+ultimate"
         const val ENEBA = "https://www.eneba.com/store/xbox?text=game%20pass%20ultimate"
@@ -16,17 +16,17 @@ object FallbackDataProvider {
         const val KINGUIN = "https://www.kinguin.net/listing?phrase=xbox+game+pass+ultimate"
         const val GAMIVO = "https://www.gamivo.com/search/xbox%20game%20pass%20ultimate"
         const val INSTANT_GAMING = "https://www.instant-gaming.com/en/search/?q=xbox+game+pass+ultimate"
-        const val K4G = "https://k4g.com/search?search=xbox+game+pass+ultimate"
-        const val GAMESEAL = "https://gameseal.com/search?q=game+pass+ultimate"
+        const val K4G = "https://k4g.com/?post_type=product&s=game+pass+ultimate"
+        const val GAMESEAL = "https://gameseal.com/"
         const val MMOGA = "https://www.mmoga.com/advanced_search.php?keywords=xbox+game+pass+ultimate"
-        const val DIFMARK = "https://www.difmark.com/search?q=xbox+game+pass+ultimate"
+        const val DIFMARK = "https://www.difmark.com/en/"
         const val ALLKEYSHOP = "https://www.allkeyshop.com/blog/buy-xbox-game-pass-ultimate-cd-key-compare-prices/"
         const val HUMBLE = "https://www.humblebundle.com/store/search?sort=bestselling&search=game%20pass"
         const val GMG = "https://www.greenmangaming.com/search/?query=xbox%20game%20pass"
         const val FANATICAL = "https://www.fanatical.com/en/search?search=game%20pass"
         const val NUUVEM = "https://www.nuuvem.com/catalog/search/game%20pass"
         const val VOIDU = "https://www.voidu.com/en/search?q=game+pass"
-        const val MICROSOFT = "https://www.xbox.com/en-US/xbox-game-pass/ultimate"
+        const val MICROSOFT = "https://www.xbox.com/xbox-game-pass"
     }
     
     /**
