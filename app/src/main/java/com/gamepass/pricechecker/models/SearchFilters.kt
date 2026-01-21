@@ -64,7 +64,7 @@ data class SearchFilters(
         if (region != Region.ALL) parts.add(region.displayName)
         if (type != DealType.ALL) parts.add(type.displayName)
         if (duration != Duration.ALL) parts.add(duration.displayName)
-        if (trustedOnly) parts.add("Trusted Only")
+        if (trustFilter != TrustFilter.ALL) parts.add(trustFilter.displayName)
         
         return if (parts.isEmpty()) "No filters" else parts.joinToString(" • ")
     }
