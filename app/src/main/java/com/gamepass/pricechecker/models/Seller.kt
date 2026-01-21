@@ -225,6 +225,51 @@ object Sellers {
         features = listOf("Official keys", "Authorized", "Reliable")
     )
     
+    val Driffle = Seller(
+        id = "driffle",
+        name = "Driffle",
+        website = "https://driffle.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Key marketplace with buyer protection",
+        features = listOf("Buyer protection", "Good prices", "Fast delivery")
+    )
+    
+    val G2Play = Seller(
+        id = "g2play",
+        name = "G2Play",
+        website = "https://www.g2play.net",
+        trustLevel = TrustLevel.HIGH,
+        description = "Trusted key marketplace",
+        features = listOf("Established", "Various regions", "Good prices")
+    )
+    
+    val PlayAsia = Seller(
+        id = "playasia",
+        name = "Play-Asia",
+        website = "https://www.play-asia.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Asian game retailer, great for regional keys",
+        features = listOf("Asia specialist", "Global shipping", "Trusted")
+    )
+    
+    val GameStop = Seller(
+        id = "gamestop",
+        name = "GameStop",
+        website = "https://www.gamestop.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Official retailer",
+        features = listOf("Official", "US-based", "Reliable")
+    )
+    
+    val Amazon = Seller(
+        id = "amazon",
+        name = "Amazon",
+        website = "https://www.amazon.com",
+        trustLevel = TrustLevel.HIGH,
+        description = "Official retailer",
+        features = listOf("Official keys", "Fast delivery", "Trustworthy")
+    )
+    
     /**
      * Get all sellers
      */
@@ -233,7 +278,8 @@ object Sellers {
         Kinguin, G2A, HumbleBundle, Gamivo,
         GGDeals, Difmark, HRKGame, Gamesplanet,
         Fanatical, K4G, Gameseal, GamersOutlet,
-        MMOGA, Voidu, Nuuvem, MTCGame, Wyrel, TwoGame
+        MMOGA, Voidu, Nuuvem, MTCGame, Wyrel, TwoGame,
+        Driffle, G2Play, PlayAsia, GameStop, Amazon
     )
     
     /**
