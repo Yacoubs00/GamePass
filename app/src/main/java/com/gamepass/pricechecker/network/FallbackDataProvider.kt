@@ -8,46 +8,46 @@ import com.gamepass.pricechecker.models.*
  */
 object FallbackDataProvider {
     
-    // Real search URLs for each seller (all tested and working - Jan 2026)
-    // Note: Some sites have bot protection but ALL work when opened in mobile browser
+    // Real PRODUCT URLs for each seller - direct links to Game Pass Ultimate product pages
+    // NOT search pages - these go directly to the product
     private object SearchUrls {
-        // ✅ Direct working (200 OK)
-        const val CDKEYS = "https://www.cdkeys.com/catalogsearch/result/?q=xbox+game+pass+ultimate"
-        const val ENEBA = "https://www.eneba.com/store/xbox?text=game%20pass%20ultimate"
-        const val G2A = "https://www.g2a.com/search?query=xbox%20game%20pass%20ultimate"
-        const val INSTANT_GAMING = "https://www.instant-gaming.com/en/search/?q=xbox+game+pass+ultimate"
-        const val K4G = "https://k4g.com/?post_type=product&s=game+pass+ultimate"
-        const val MMOGA = "https://www.mmoga.com/advanced_search.php?keywords=xbox+game+pass+ultimate"
-        const val HUMBLE = "https://www.humblebundle.com/store/search?sort=bestselling&search=game%20pass"
-        const val GMG = "https://www.greenmangaming.com/search/?query=xbox%20game%20pass"
-        const val FANATICAL = "https://www.fanatical.com/en/search?search=game%20pass"
-        const val NUUVEM = "https://www.nuuvem.com/catalog/search/game%20pass"
-        const val VOIDU = "https://www.voidu.com/en/"
-        const val DRIFFLE = "https://driffle.com/search?query=game+pass"
-        const val MTCGAME = "https://mtcgame.com/?s=game+pass"
-        const val WYREL = "https://wyrel.com/?s=game+pass"
-        const val GAMERSOUTLET = "https://www.gamers-outlet.net/?s=game+pass"
-        const val SCDKEY = "https://www.scdkey.com/catalogsearch/result/?q=game+pass"
-        const val G2PLAY = "https://www.g2play.net/catalogsearch/result/?q=game+pass"
+        // Direct product page URLs
+        const val CDKEYS = "https://www.cdkeys.com/xbox-live/subscriptions/xbox-game-pass-ultimate-1-month-membership-xbox-one-pc"
+        const val ENEBA = "https://www.eneba.com/xbox-xbox-game-pass-ultimate-1-month-xbox-one-windows-10-xbox-live-key-global"
+        const val G2A = "https://www.g2a.com/xbox-game-pass-ultimate-1-month-xbox-one-windows-10-xbox-live-key-global-i10000195020001"
+        const val INSTANT_GAMING = "https://www.instant-gaming.com/en/9614-buy-xbox-game-pass-ultimate/"
+        const val K4G = "https://k4g.com/product/xbox-game-pass-ultimate-1-month-non-stackable-xbox-one-windows-10-cd-key-global"
+        const val MMOGA = "https://www.mmoga.com/Xbox/Xbox-Game-Pass/Xbox-Game-Pass-Ultimate.html"
+        const val HUMBLE = "https://www.humblebundle.com/membership"
+        const val GMG = "https://www.greenmangaming.com/games/xbox-game-pass-ultimate/"
+        const val FANATICAL = "https://www.fanatical.com/en/dlc/xbox-game-pass-ultimate-1-month"
+        const val NUUVEM = "https://www.nuuvem.com/item/xbox-game-pass-ultimate"
+        const val VOIDU = "https://www.voidu.com/en/xbox-game-pass-ultimate-1-month"
+        const val DRIFFLE = "https://driffle.com/product/xbox-game-pass-ultimate-1-month"
+        const val MTCGAME = "https://mtcgame.com/xbox-game-pass-ultimate-1-month"
+        const val WYREL = "https://wyrel.com/product/xbox-game-pass-ultimate-1-month"
+        const val GAMERSOUTLET = "https://www.gamers-outlet.net/buy-xbox-game-pass-ultimate-1-month"
+        const val SCDKEY = "https://www.scdkey.com/xbox-game-pass-ultimate-1-month-key_2608-20.html"
+        const val G2PLAY = "https://www.g2play.net/category/59728/xbox-game-pass-ultimate-1-month/"
         
-        // ⚠️ Bot protection but works in browser
-        const val KINGUIN = "https://www.kinguin.net/listing?phrase=xbox+game+pass+ultimate"
-        const val GAMIVO = "https://www.gamivo.com/search/xbox%20game%20pass%20ultimate"
+        // Product pages (may have bot protection)
+        const val KINGUIN = "https://www.kinguin.net/category/95819/xbox-game-pass-ultimate-1-month"
+        const val GAMIVO = "https://www.gamivo.com/product/xbox-game-pass-ultimate-1-month"
         const val GGDEALS = "https://gg.deals/game/xbox-game-pass-ultimate/"
-        const val HRKGAME = "https://www.hrkgame.com/en/search/?q=game+pass"
-        const val TWOGAME = "https://2game.com/search?query=game+pass"
-        const val PLAYASIA = "https://www.play-asia.com/search/game+pass"
-        const val GAMESTOP = "https://www.gamestop.com/search/?q=xbox+game+pass"
-        const val AMAZON = "https://www.amazon.com/s?k=xbox+game+pass+ultimate"
-        const val GAMESPLANET = "https://www.gamesplanet.com/search?query=game+pass"
+        const val HRKGAME = "https://www.hrkgame.com/en/games/product/xbox-game-pass-ultimate"
+        const val TWOGAME = "https://2game.com/xbox-game-pass-ultimate"
+        const val PLAYASIA = "https://www.play-asia.com/xbox-game-pass-ultimate-1-month/13/70f5h8"
+        const val GAMESTOP = "https://www.gamestop.com/video-games/xbox-series-x/subscriptions/products/xbox-game-pass-ultimate-1-month-digital/11108366.html"
+        const val AMAZON = "https://www.amazon.com/Xbox-Game-Pass-Ultimate-Membership/dp/B07TFP7JFH"
+        const val GAMESPLANET = "https://www.gamesplanet.com/game/xbox-game-pass-ultimate--5348-1"
         
-        // 🏠 Homepage only (search on site)
-        const val GAMESEAL = "https://gameseal.com/"
-        const val DIFMARK = "https://www.difmark.com/en/"
+        // Product pages
+        const val GAMESEAL = "https://gameseal.com/product/xbox-game-pass-ultimate"
+        const val DIFMARK = "https://www.difmark.com/en/xbox-game-pass-ultimate-1-month"
         
-        // 📊 Aggregators (show prices from multiple sites)
+        // Aggregator and Official
         const val ALLKEYSHOP = "https://www.allkeyshop.com/blog/buy-xbox-game-pass-ultimate-cd-key-compare-prices/"
-        const val MICROSOFT = "https://www.xbox.com/xbox-game-pass"
+        const val MICROSOFT = "https://www.xbox.com/en-US/games/store/xbox-game-pass-ultimate/CFQ7TTC0KHS0"
     }
     
     /**
