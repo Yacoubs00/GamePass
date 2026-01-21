@@ -1,20 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.GamePassPriceChecker" parent="Theme.Material3.Dark.NoActionBar">
+    <!-- Base theme with DayNight support -->
+    <style name="Theme.GamePassPriceChecker" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Primary brand color -->
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorPrimary">@color/xbox_green</item>
+        <item name="colorPrimaryDark">@color/xbox_green_dark</item>
         <item name="colorAccent">@color/accent</item>
+        <item name="colorOnPrimary">@color/white</item>
         
-        <!-- Background -->
+        <!-- Surface colors -->
+        <item name="colorSurface">@color/background_card</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+    </style>
+    
+    <!-- Light Theme -->
+    <style name="Theme.GamePassPriceChecker.Light" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/xbox_green</item>
+        <item name="colorPrimaryDark">@color/xbox_green_dark</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="colorOnPrimary">@color/white</item>
+        
+        <!-- Light backgrounds -->
+        <item name="android:colorBackground">@color/light_background_primary</item>
+        <item name="android:windowBackground">@color/light_background_primary</item>
+        <item name="android:statusBarColor">@color/light_background_primary</item>
+        <item name="android:navigationBarColor">@color/light_background_primary</item>
+        
+        <!-- Light text colors -->
+        <item name="android:textColorPrimary">@color/light_text_primary</item>
+        <item name="android:textColorSecondary">@color/light_text_secondary</item>
+        <item name="android:textColorHint">@color/light_text_hint</item>
+    </style>
+    
+    <!-- Dark Theme -->
+    <style name="Theme.GamePassPriceChecker.Dark" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/xbox_green</item>
+        <item name="colorPrimaryDark">@color/xbox_green_dark</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="colorOnPrimary">@color/white</item>
+        
+        <!-- Dark backgrounds -->
         <item name="android:colorBackground">@color/background_primary</item>
         <item name="android:windowBackground">@color/background_primary</item>
-        
-        <!-- Status bar -->
         <item name="android:statusBarColor">@color/background_primary</item>
         <item name="android:navigationBarColor">@color/background_primary</item>
         
-        <!-- Text colors -->
+        <!-- Dark text colors -->
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
         <item name="android:textColorHint">@color/text_hint</item>
@@ -23,21 +54,18 @@
     <!-- Button style -->
     <style name="GreenButton" parent="Widget.Material3.Button">
         <item name="android:backgroundTint">@color/xbox_green</item>
-        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColor">@color/white</item>
         <item name="cornerRadius">8dp</item>
     </style>
     
     <!-- Card style -->
     <style name="PriceCard" parent="Widget.Material3.CardView.Filled">
-        <item name="cardBackgroundColor">@color/background_card</item>
         <item name="cardCornerRadius">12dp</item>
         <item name="cardElevation">4dp</item>
     </style>
     
     <!-- Chip style for filters -->
     <style name="FilterChip" parent="Widget.Material3.Chip.Filter">
-        <item name="chipBackgroundColor">@color/background_secondary</item>
-        <item name="android:textColor">@color/text_primary</item>
         <item name="checkedIconTint">@color/xbox_green</item>
     </style>
 </resources>
