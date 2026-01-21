@@ -1,6 +1,16 @@
 package com.gamepass.pricechecker.models
 
 /**
+ * Trust level filter options
+ */
+enum class TrustFilter(val displayName: String) {
+    ALL("All Sellers"),
+    HIGH_ONLY("Highly Trusted Only"),
+    HIGH_MEDIUM("Trusted & Above"),
+    CAUTION("Include Caution")
+}
+
+/**
  * Holds the current search filter state
  */
 data class SearchFilters(
@@ -8,7 +18,7 @@ data class SearchFilters(
     val type: DealType = DealType.ALL,
     val duration: Duration = Duration.ALL,
     val sortBy: SortOption = SortOption.PRICE_LOW,
-    val trustedOnly: Boolean = false,
+    val trustFilter: TrustFilter = TrustFilter.ALL,
     val excludeTrials: Boolean = true  // Exclude trials by default
 ) {
     /**
@@ -30,9 +40,11 @@ data class SearchFilters(
             return false
         }
         
-        // Trusted only filter
-        if (trustedOnly && deal.trustLevel != TrustLevel.HIGH) {
-            return false
+        // Trust level filter
+        when (trustFilter) {
+            TrustFilter.HIGH_ONLY -> if (deal.trustLevel != TrustLevel.HIGH) return false
+            TrustFilter.HIGH_MEDIUM -> if (deal.trustLevel == TrustLevel.CAUTION) return false
+            TrustFilter.ALL, TrustFilter.CAUTION -> { /* Allow all */ }
         }
         
         // Exclude trials filter
