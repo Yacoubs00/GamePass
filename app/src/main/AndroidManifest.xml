@@ -5,6 +5,10 @@
     <!-- Internet permission for fetching prices -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Foreground service for background WebView scraping -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -32,6 +36,12 @@
             android:exported="false"
             android:label="Seller Trust Levels"
             android:theme="@style/Theme.GamePassPriceChecker" />
+        
+        <!-- Background service for WebView-based scraping with Cloudflare bypass -->
+        <service
+            android:name=".service.PriceFetchService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
         
     </application>
 
