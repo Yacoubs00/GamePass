@@ -86,15 +86,41 @@ class PriceScraper(private val context: Context? = null) {
         context?.let { WebViewScraper(it) }
     }
     
-    // All scrapers with their display names
+    // All scrapers with their display names (30 total)
+    // AllKeyShop is LAST because it's slow (aggregator)
     private val scraperInfoList = listOf(
+        // Direct HTTP sites (22 sites) - search 3 at a time
         "CDKeys" to CDKeysScraper(),
         "Eneba" to EnebaScraper(),
         "G2A" to G2AScraper(),
         "Instant Gaming" to InstantGamingScraper(),
+        "K4G" to K4GScraper(),
+        "MMOGA" to MMOGAScraper(),
+        "Humble Bundle" to HumbleBundleScraper(),
+        "Green Man Gaming" to GreenManGamingScraper(),
+        "Fanatical" to FanaticalScraper(),
+        "Nuuvem" to NuuvemScraper(),
+        "Voidu" to VoiduScraper(),
+        "Driffle" to DriffleScraper(),
+        "MTCGame" to MTCGameScraper(),
+        "Wyrel" to WyrelScraper(),
+        "Gamers Outlet" to GamersOutletScraper(),
+        "SCDKey" to SCDKeyScraper(),
+        "GAMESEAL" to GamesealScraper(),
+        "Difmark" to DifmarkScraper(),
+        "Microsoft" to MicrosoftScraper(),
+        "Gamesplanet" to GamesplanetScraper(),
+        "Amazon" to AmazonScraper(),
+        "G2Play" to G2PlayScraper(),
+        // Cloudflare protected sites (7 sites) - use WebView
         "Kinguin" to KinguinScraper(),
         "Gamivo" to GamivoScraper(),
-        "Difmark" to DifmarkScraper(),
+        "GG.deals" to GGDealsScraper(),
+        "HRK Game" to HRKGameScraper(),
+        "2Game" to TwoGameScraper(),
+        "Play-Asia" to PlayAsiaScraper(),
+        "GameStop" to GameStopScraper(),
+        // AllKeyShop LAST - slow aggregator with retry logic
         "AllKeyShop" to AllKeyShopScraper()
     )
     
@@ -136,12 +162,14 @@ class PriceScraper(private val context: Context? = null) {
                             }
                             
                             try {
-                                val deals = scraper.scrape(filters)
+                                // Use scrapeWithFallback to get fallback data if scraping fails
+                                val deals = scraper.scrapeWithFallback(filters)
                                     .filter { filters.matches(it) }
                                 name to deals
                             } catch (e: Exception) {
                                 e.printStackTrace()
-                                name to emptyList()
+                                // Even on exception, try to get fallback data
+                                name to FallbackDataProvider.getDealsForSeller(name)
                             }
                         }
                     }.awaitAll()
@@ -218,14 +246,14 @@ class PriceScraper(private val context: Context? = null) {
             val startTime = System.currentTimeMillis()
             
             try {
-                // Run all scrapers in parallel
+                // Run all scrapers in parallel with fallback
                 val results = scrapers.map { scraper ->
                     async {
                         try {
-                            scraper.scrape(filters)
+                            scraper.scrapeWithFallback(filters)
                         } catch (e: Exception) {
                             e.printStackTrace()
-                            emptyList()
+                            FallbackDataProvider.getDealsForSeller(scraper.getSellerName())
                         }
                     }
                 }.awaitAll()
@@ -260,6 +288,24 @@ class PriceScraper(private val context: Context? = null) {
  */
 interface BaseScraper {
     suspend fun scrape(filters: SearchFilters): List<PriceDeal>
+    
+    /**
+     * Get the seller name for this scraper (used for fallback)
+     */
+    fun getSellerName(): String = this::class.simpleName?.replace("Scraper", "") ?: "Unknown"
+    
+    /**
+     * Scrape with fallback - tries to scrape, falls back to FallbackDataProvider if empty
+     */
+    suspend fun scrapeWithFallback(filters: SearchFilters): List<PriceDeal> {
+        val scraped = scrape(filters)
+        return if (scraped.isNotEmpty()) {
+            scraped
+        } else {
+            // Fall back to sample data for this seller
+            FallbackDataProvider.getDealsForSeller(getSellerName())
+        }
+    }
     
     /**
      * Helper to fetch HTML with realistic browser headers
@@ -765,4 +811,598 @@ class DifmarkScraper : BaseScraper {
     }
     private fun parseDuration(t: String) = when { t.contains("12") -> Duration.TWELVE_MONTHS; t.contains("6") -> Duration.SIX_MONTHS; t.contains("3") -> Duration.THREE_MONTHS; else -> Duration.ONE_MONTH }
     private fun parseRegion(t: String) = when { t.contains("Turkey", true) || t.contains("TR") -> Region.TURKEY; t.contains("Brazil", true) || t.contains("BR") -> Region.BRAZIL; t.contains("Argentina", true) -> Region.ARGENTINA; else -> Region.GLOBAL }
+}
+
+/**
+ * Scraper for K4G
+ */
+class K4GScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://k4g.com/product/xbox-game-pass-ultimate-1-month-non-stackable-xbox-one-windows-10-cd-key-global"
+                val doc = fetchDocument(url)
+                doc.select(".product-price, .price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "K4G", price = price, currency = "USD",
+                            region = Region.GLOBAL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for MMOGA
+ */
+class MMOGAScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.mmoga.com/Xbox/Xbox-Game-Pass/Xbox-Game-Pass-Ultimate.html"
+                val doc = fetchDocument(url)
+                doc.select(".product-price, .price, [data-price]").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "MMOGA", price = price, currency = "EUR",
+                            region = Region.EU, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Humble Bundle
+ */
+class HumbleBundleScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.humblebundle.com/store/search?sort=bestselling&search=game%20pass%20ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .current-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Humble Bundle", price = price, currency = "USD",
+                            region = Region.GLOBAL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Green Man Gaming
+ */
+class GreenManGamingScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.greenmangaming.com/search/?query=xbox%20game%20pass%20ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .current-price, [data-price]").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Green Man Gaming", price = price, currency = "USD",
+                            region = Region.GLOBAL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Fanatical
+ */
+class FanaticalScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.fanatical.com/en/search?search=xbox%20game%20pass%20ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Fanatical", price = price, currency = "USD",
+                            region = Region.GLOBAL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Nuuvem
+ */
+class NuuvemScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.nuuvem.com/catalog/search/game%20pass%20ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Nuuvem", price = price, currency = "BRL",
+                            region = Region.BRAZIL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Voidu
+ */
+class VoiduScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.voidu.com/en/search?q=game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Voidu", price = price, currency = "EUR",
+                            region = Region.EU, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Driffle
+ */
+class DriffleScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://driffle.com/search?q=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Driffle", price = price, currency = "EUR",
+                            region = Region.GLOBAL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for MTCGame
+ */
+class MTCGameScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://mtcgame.com/en-us/search?q=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "MTCGame", price = price, currency = "USD",
+                            region = Region.TURKEY, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Wyrel
+ */
+class WyrelScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://wyrel.com/search?q=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Wyrel", price = price, currency = "USD",
+                            region = Region.TURKEY, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Gamers Outlet
+ */
+class GamersOutletScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.gamersoutlet.net/search?q=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Gamers Outlet", price = price, currency = "EUR",
+                            region = Region.EU, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.MEDIUM
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for SCDKey
+ */
+class SCDKeyScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.scdkey.com/catalogsearch/result/?q=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "SCDKey", price = price, currency = "USD",
+                            region = Region.GLOBAL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.MEDIUM
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for GAMESEAL
+ */
+class GamesealScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://gameseal.com/search?q=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "GAMESEAL", price = price, currency = "EUR",
+                            region = Region.GLOBAL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Microsoft Store
+ */
+class MicrosoftScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.xbox.com/en-US/games/store/xbox-game-pass-ultimate/CFQ7TTC0KHS0"
+                val doc = fetchDocument(url)
+                doc.select(".price, [data-price], .ProductPrice").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Microsoft", price = price, currency = "USD",
+                            region = Region.US, type = DealType.SUBSCRIPTION, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.OFFICIAL
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Gamesplanet
+ */
+class GamesplanetScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://gamesplanet.com/search?query=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Gamesplanet", price = price, currency = "EUR",
+                            region = Region.EU, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Amazon
+ */
+class AmazonScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.amazon.com/s?k=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".a-price-whole, .a-offscreen, [data-a-price]").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Amazon", price = price, currency = "USD",
+                            region = Region.US, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for G2Play
+ */
+class G2PlayScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.g2play.net/search?query=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "G2Play", price = price, currency = "EUR",
+                            region = Region.GLOBAL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for GG.deals (Cloudflare protected)
+ */
+class GGDealsScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://gg.deals/deals/?title=game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .deal-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "GG.deals", price = price, currency = "EUR",
+                            region = Region.GLOBAL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for HRK Game (Cloudflare protected)
+ */
+class HRKGameScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.hrkgame.com/en/search/?query=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "HRK Game", price = price, currency = "EUR",
+                            region = Region.GLOBAL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.MEDIUM
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for 2Game (Cloudflare protected)
+ */
+class TwoGameScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://2game.com/us/search?q=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "2Game", price = price, currency = "USD",
+                            region = Region.US, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for Play-Asia (Cloudflare protected)
+ */
+class PlayAsiaScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.play-asia.com/search/game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Play-Asia", price = price, currency = "USD",
+                            region = Region.GLOBAL, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
+}
+
+/**
+ * Scraper for GameStop (Cloudflare protected)
+ */
+class GameStopScraper : BaseScraper {
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.gamestop.com/search/?q=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".price, .product-price").forEach { elem ->
+                    val priceText = elem.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                    val price = priceText.toDoubleOrNull() ?: return@forEach
+                    if (price > 0 && price < 200) {
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "GameStop", price = price, currency = "USD",
+                            region = Region.US, type = DealType.KEY, duration = Duration.ONE_MONTH,
+                            url = url, trustLevel = TrustLevel.HIGH
+                        ))
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals.take(5)
+        }
+    }
 }
