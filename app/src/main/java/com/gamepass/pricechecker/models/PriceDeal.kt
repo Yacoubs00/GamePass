@@ -19,6 +19,7 @@ data class PriceDeal(
     val rating: Float? = null,
     val reviewCount: Int? = null,
     val inStock: Boolean = true,
+    val isTrial: Boolean = false,  // Flag for trial offers
     val lastUpdated: Long = System.currentTimeMillis()
 ) {
     /**
