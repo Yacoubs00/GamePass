@@ -168,3 +168,6 @@ This project is open source and available under the MIT License.
 ---
 
 **Made with ❤️ for Xbox gamers looking for the best Game Pass deals**
+
+---
+**Latest: v0.0.2** - Added progress bar with live streaming results
