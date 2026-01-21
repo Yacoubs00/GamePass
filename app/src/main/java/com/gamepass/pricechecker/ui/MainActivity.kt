@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         region = Region.ALL,  // Default to all, but UAE is prioritized in display
         type = DealType.ALL,
         duration = Duration.ALL,
-        trustedOnly = false
+        trustFilter = TrustFilter.ALL
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
