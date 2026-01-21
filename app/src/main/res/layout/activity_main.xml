@@ -61,6 +61,17 @@
                 android:padding="8dp"
                 app:tint="?android:textColorPrimary" />
 
+            <!-- Info/Menu Button -->
+            <ImageButton
+                android:id="@+id/btnInfo"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Seller info"
+                android:src="@android:drawable/ic_menu_info_details"
+                android:padding="8dp"
+                app:tint="?android:textColorPrimary" />
+
         </LinearLayout>
 
         <!-- Filter chips -->
