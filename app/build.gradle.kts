@@ -63,6 +63,9 @@ dependencies {
     // HTML parsing for web scraping
     implementation("org.jsoup:jsoup:1.17.2")
     
+    // Cloudflare bypass for protected sites
+    implementation("com.github.darkryh:Cloudflare-Bypass:v0.0.5")
+    
     // Coroutines for async operations
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
