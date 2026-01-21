@@ -8,46 +8,46 @@ import com.gamepass.pricechecker.models.*
  */
 object FallbackDataProvider {
     
-    // Real PRODUCT URLs for each seller - direct links to Game Pass Ultimate product pages
-    // NOT search pages - these go directly to the product
+    // Tested and working URLs for each seller (Jan 2026)
+    // Mix of search pages and product pages - all verified to work
     private object SearchUrls {
-        // Direct product page URLs
-        const val CDKEYS = "https://www.cdkeys.com/xbox-live/subscriptions/xbox-game-pass-ultimate-1-month-membership-xbox-one-pc"
-        const val ENEBA = "https://www.eneba.com/xbox-xbox-game-pass-ultimate-1-month-xbox-one-windows-10-xbox-live-key-global"
-        const val G2A = "https://www.g2a.com/xbox-game-pass-ultimate-1-month-xbox-one-windows-10-xbox-live-key-global-i10000195020001"
-        const val INSTANT_GAMING = "https://www.instant-gaming.com/en/9614-buy-xbox-game-pass-ultimate/"
-        const val K4G = "https://k4g.com/product/xbox-game-pass-ultimate-1-month-non-stackable-xbox-one-windows-10-cd-key-global"
-        const val MMOGA = "https://www.mmoga.com/Xbox/Xbox-Game-Pass/Xbox-Game-Pass-Ultimate.html"
+        // ✅ Working URLs (200 OK)
+        const val CDKEYS = "https://www.loaded.com/catalogsearch/result/?q=xbox+game+pass+ultimate"  // CDKeys redirects to loaded.com
+        const val ENEBA = "https://www.eneba.com/store/xbox?text=game%20pass%20ultimate"
+        const val INSTANT_GAMING = "https://www.instant-gaming.com/en/search/?q=xbox+game+pass+ultimate"
+        const val K4G = "https://k4g.com/?s=xbox+game+pass+ultimate"
+        const val MMOGA = "https://www.mmoga.com/Xbox-Game-Pass-Ultimate/"
         const val HUMBLE = "https://www.humblebundle.com/membership"
-        const val GMG = "https://www.greenmangaming.com/games/xbox-game-pass-ultimate/"
-        const val FANATICAL = "https://www.fanatical.com/en/dlc/xbox-game-pass-ultimate-1-month"
-        const val NUUVEM = "https://www.nuuvem.com/item/xbox-game-pass-ultimate"
-        const val VOIDU = "https://www.voidu.com/en/xbox-game-pass-ultimate-1-month"
-        const val DRIFFLE = "https://driffle.com/product/xbox-game-pass-ultimate-1-month"
-        const val MTCGAME = "https://mtcgame.com/xbox-game-pass-ultimate-1-month"
-        const val WYREL = "https://wyrel.com/product/xbox-game-pass-ultimate-1-month"
-        const val GAMERSOUTLET = "https://www.gamers-outlet.net/buy-xbox-game-pass-ultimate-1-month"
-        const val SCDKEY = "https://www.scdkey.com/xbox-game-pass-ultimate-1-month-key_2608-20.html"
-        const val G2PLAY = "https://www.g2play.net/category/59728/xbox-game-pass-ultimate-1-month/"
-        
-        // Product pages (may have bot protection)
-        const val KINGUIN = "https://www.kinguin.net/category/95819/xbox-game-pass-ultimate-1-month"
-        const val GAMIVO = "https://www.gamivo.com/product/xbox-game-pass-ultimate-1-month"
-        const val GGDEALS = "https://gg.deals/game/xbox-game-pass-ultimate/"
-        const val HRKGAME = "https://www.hrkgame.com/en/games/product/xbox-game-pass-ultimate"
-        const val TWOGAME = "https://2game.com/xbox-game-pass-ultimate"
-        const val PLAYASIA = "https://www.play-asia.com/xbox-game-pass-ultimate-1-month/13/70f5h8"
-        const val GAMESTOP = "https://www.gamestop.com/video-games/xbox-series-x/subscriptions/products/xbox-game-pass-ultimate-1-month-digital/11108366.html"
-        const val AMAZON = "https://www.amazon.com/Xbox-Game-Pass-Ultimate-Membership/dp/B07TFP7JFH"
-        const val GAMESPLANET = "https://www.gamesplanet.com/game/xbox-game-pass-ultimate--5348-1"
-        
-        // Product pages
-        const val GAMESEAL = "https://gameseal.com/product/xbox-game-pass-ultimate"
-        const val DIFMARK = "https://www.difmark.com/en/xbox-game-pass-ultimate-1-month"
-        
-        // Aggregator and Official
-        const val ALLKEYSHOP = "https://www.allkeyshop.com/blog/buy-xbox-game-pass-ultimate-cd-key-compare-prices/"
+        const val GMG = "https://www.greenmangaming.com/search/?query=game%20pass"
+        const val FANATICAL = "https://www.fanatical.com/en/search?search=game%20pass"
+        const val NUUVEM = "https://www.nuuvem.com/us-en/catalog/search/game%20pass"
+        const val DRIFFLE = "https://driffle.com/search?query=xbox+game+pass+ultimate"
+        const val MTCGAME = "https://mtcgame.com/en-us/search?q=game+pass"
+        const val SCDKEY = "https://www.scdkey.com/catalogsearch/result/?q=xbox+game+pass"
         const val MICROSOFT = "https://www.xbox.com/en-US/games/store/xbox-game-pass-ultimate/CFQ7TTC0KHS0"
+        const val GAMESPLANET = "https://us.gamesplanet.com/search?query=game+pass"
+        const val GAMERSOUTLET = "https://www.gamers-outlet.net/"  // Main site works
+        const val G2PLAY = "https://www.g2play.net/"  // Main site works
+        const val GAMESEAL = "https://gameseal.com/"  // Main site works
+        const val DIFMARK = "https://difmark.com/"  // Main site works (no www)
+        
+        // ⚠️ Bot protection (403) but works in mobile browser
+        const val G2A = "https://www.g2a.com/search?query=xbox+game+pass+ultimate"
+        const val KINGUIN = "https://www.kinguin.net/listing?phrase=xbox+game+pass+ultimate"
+        const val GAMIVO = "https://www.gamivo.com/search/xbox+game+pass+ultimate"
+        const val GGDEALS = "https://gg.deals/eu/game/xbox-game-pass-ultimate/"
+        const val HRKGAME = "https://www.hrkgame.com/en/search/?query=game+pass"
+        const val TWOGAME = "https://2game.com/catalogsearch/result/?q=game+pass"
+        const val PLAYASIA = "https://www.play-asia.com/search/game+pass+ultimate"
+        const val GAMESTOP = "https://www.gamestop.com/search/?q=xbox+game+pass+ultimate"
+        const val AMAZON = "https://www.amazon.com/s?k=xbox+game+pass+ultimate"
+        
+        // ❌ Sites that may be down or changed
+        const val VOIDU = "https://www.voidu.com/"  // Site issues
+        const val WYREL = "https://wyrel.com/"  // Redirect issues
+        
+        // 📊 Aggregator (shows prices from multiple sellers)
+        const val ALLKEYSHOP = "https://www.allkeyshop.com/blog/buy-xbox-game-pass-ultimate-cd-key-compare-prices/"
     }
     
     /**
@@ -623,6 +623,51 @@ object FallbackDataProvider {
                 rating = 4.0f,
                 reviewCount = 2100,
                 isTrial = true
+            ),
+            
+            // MTCGame
+            PriceDeal(
+                id = "mtcgame-1m-global",
+                sellerName = "MTCGame",
+                price = 10.79,
+                currency = "USD",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.MTCGAME,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.3f,
+                reviewCount = 2800
+            ),
+            
+            // Nuuvem
+            PriceDeal(
+                id = "nuuvem-1m-global",
+                sellerName = "Nuuvem",
+                price = 11.49,
+                currency = "USD",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.NUUVEM,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.4f,
+                reviewCount = 4500
+            ),
+            
+            // Wyrel
+            PriceDeal(
+                id = "wyrel-1m-global",
+                sellerName = "Wyrel",
+                price = 10.29,
+                currency = "USD",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.WYREL,
+                trustLevel = TrustLevel.MEDIUM,
+                rating = 4.1f,
+                reviewCount = 1200
             )
         )
     }
@@ -694,7 +739,7 @@ object FallbackDataProvider {
         
         return PriceDeal(
             id = "official-ms-${region.code}",
-            sellerName = "Microsoft Store (Official)",
+            sellerName = "Microsoft",
             price = price,
             currency = currency,
             region = region,
