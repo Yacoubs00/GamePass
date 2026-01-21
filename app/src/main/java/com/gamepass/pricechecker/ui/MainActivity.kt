@@ -1,7 +1,10 @@
 package com.gamepass.pricechecker.ui
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
@@ -9,6 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.gamepass.pricechecker.R
@@ -18,11 +22,14 @@ import com.gamepass.pricechecker.models.*
 import com.gamepass.pricechecker.models.TrustFilter
 import com.gamepass.pricechecker.network.FallbackDataProvider
 import com.gamepass.pricechecker.network.PriceScraper
+import com.gamepass.pricechecker.service.PriceFetchService
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.launch
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -63,6 +70,46 @@ class MainActivity : AppCompatActivity() {
     // Adapter and data
     private lateinit var dealsAdapter: DealsAdapter
     private lateinit var priceScraper: PriceScraper
+    private val gson = Gson()
+    
+    // Broadcast receiver for WebView-based scraping results
+    private val priceResultReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                PriceFetchService.ACTION_PRICE_RESULT -> {
+                    val siteName = intent.getStringExtra(PriceFetchService.EXTRA_SITE_COMPLETED) ?: ""
+                    val dealsJson = intent.getStringExtra(PriceFetchService.EXTRA_DEALS) ?: "[]"
+                    
+                    try {
+                        val type = object : TypeToken<List<PriceDeal>>() {}.type
+                        val newDeals: List<PriceDeal> = gson.fromJson(dealsJson, type)
+                        
+                        if (newDeals.isNotEmpty()) {
+                            runOnUiThread {
+                                // Add new deals to existing list and sort
+                                val currentDeals = dealsAdapter.currentList.toMutableList()
+                                currentDeals.addAll(newDeals.filter { newDeal -> 
+                                    currentDeals.none { it.sellerName == newDeal.sellerName && it.price == newDeal.price }
+                                })
+                                val sortedDeals = currentDeals.sortedBy { it.price }
+                                dealsAdapter.submitList(sortedDeals)
+                                
+                                tvResultCount.text = "${sortedDeals.size} deals"
+                                tvCurrentSite.text = "Got results from $siteName"
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                PriceFetchService.ACTION_FETCH_COMPLETE -> {
+                    runOnUiThread {
+                        tvCurrentSite.text = "WebView scraping complete"
+                    }
+                }
+            }
+        }
+    }
     
     // Theme preferences
     private val PREFS_NAME = "GamePassPrefs"
@@ -82,6 +129,13 @@ class MainActivity : AppCompatActivity() {
         
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        
+        // Register broadcast receiver for WebView scraping results
+        val filter = IntentFilter().apply {
+            addAction(PriceFetchService.ACTION_PRICE_RESULT)
+            addAction(PriceFetchService.ACTION_FETCH_COMPLETE)
+        }
+        LocalBroadcastManager.getInstance(this).registerReceiver(priceResultReceiver, filter)
 
         // Initialize price scraper with context for WebView support
         priceScraper = PriceScraper(this)
@@ -226,12 +280,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun searchDeals() {
         showStreamingState()
+        
+        // Start WebView-based scraping for Cloudflare-protected sites in parallel
+        // These will send results via broadcast as they complete
+        val cloudflareSites = listOf("G2A", "Kinguin", "Gamivo", "GG.deals", "HRK Game", "2Game", "Play-Asia", "GameStop", "Amazon")
+        PriceFetchService.startFetch(this, cloudflareSites)
 
         lifecycleScope.launch {
             val startTime = System.currentTimeMillis()
             
             try {
-                // Use streaming search with progress callbacks
+                // Use streaming search with progress callbacks (for non-Cloudflare sites)
                 val result = priceScraper.searchAllStreaming(
                     filters = currentFilters,
                     onProgress = { progress ->
@@ -630,5 +689,11 @@ class MainActivity : AppCompatActivity() {
             TrustFilter.CAUTION -> "⚠️"
         }
         chipTrustLevel.text = "$trustEmoji ${currentFilters.trustFilter.displayName}"
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        // Unregister broadcast receiver
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(priceResultReceiver)
     }
 }
