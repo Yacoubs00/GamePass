@@ -15,7 +15,11 @@ class PriceScraper {
         AllKeyShopScraper(),
         CDKeysScraper(),
         EnebaScraper(),
-        G2AScraper()
+        G2AScraper(),
+        InstantGamingScraper(),
+        KinguinScraper(),
+        GamivoScraper(),
+        DifmarkScraper()
     )
     
     /**
@@ -349,7 +353,7 @@ class G2AScraper : BaseScraper {
                             type = DealType.KEY,
                             duration = parseDurationFromTitle(title),
                             url = fullLink,
-                            trustLevel = TrustLevel.CAUTION // G2A requires caution
+                            trustLevel = TrustLevel.HIGH
                         ))
                     } catch (e: Exception) {
                         // Skip malformed entries
@@ -383,4 +387,144 @@ class G2AScraper : BaseScraper {
             else -> Region.GLOBAL
         }
     }
+}
+
+/**
+ * Scraper for Instant Gaming
+ */
+class InstantGamingScraper : BaseScraper {
+    
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.instant-gaming.com/en/search/?q=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".item").forEach { item ->
+                    try {
+                        val title = item.select(".title").text()
+                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        val priceText = item.select(".price").text()
+                            .replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                        val price = priceText.toDoubleOrNull() ?: return@forEach
+                        val link = item.select("a").attr("href")
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Instant Gaming", price = price,
+                            currency = "EUR", region = parseRegion(title), type = DealType.KEY,
+                            duration = parseDuration(title), url = link.ifEmpty { "https://www.instant-gaming.com" },
+                            trustLevel = TrustLevel.HIGH
+                        ))
+                    } catch (e: Exception) { }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals
+        }
+    }
+    private fun parseDuration(t: String) = when { t.contains("12") -> Duration.TWELVE_MONTHS; t.contains("6") -> Duration.SIX_MONTHS; t.contains("3") -> Duration.THREE_MONTHS; else -> Duration.ONE_MONTH }
+    private fun parseRegion(t: String) = when { t.contains("Global", true) -> Region.GLOBAL; t.contains("EU", true) -> Region.EU; t.contains("US", true) -> Region.US; else -> Region.GLOBAL }
+}
+
+/**
+ * Scraper for Kinguin
+ */
+class KinguinScraper : BaseScraper {
+    
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.kinguin.net/listing?phrase=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select("[data-product-card]").forEach { card ->
+                    try {
+                        val title = card.select("[data-product-name]").text()
+                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        val priceText = card.select("[data-product-price]").text()
+                            .replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                        val price = priceText.toDoubleOrNull() ?: return@forEach
+                        val link = card.select("a").attr("href")
+                        val fullLink = if (link.startsWith("http")) link else "https://www.kinguin.net$link"
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Kinguin", price = price,
+                            currency = "EUR", region = parseRegion(title), type = DealType.KEY,
+                            duration = parseDuration(title), url = fullLink, trustLevel = TrustLevel.HIGH
+                        ))
+                    } catch (e: Exception) { }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals
+        }
+    }
+    private fun parseDuration(t: String) = when { t.contains("12") -> Duration.TWELVE_MONTHS; t.contains("6") -> Duration.SIX_MONTHS; t.contains("3") -> Duration.THREE_MONTHS; else -> Duration.ONE_MONTH }
+    private fun parseRegion(t: String) = when { t.contains("Global", true) -> Region.GLOBAL; t.contains("Turkey", true) -> Region.TURKEY; t.contains("Brazil", true) -> Region.BRAZIL; t.contains("EU", true) -> Region.EU; else -> Region.GLOBAL }
+}
+
+/**
+ * Scraper for Gamivo
+ */
+class GamivoScraper : BaseScraper {
+    
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.gamivo.com/search?query=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".product-card").forEach { card ->
+                    try {
+                        val title = card.select(".product-card__title").text()
+                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        val priceText = card.select(".product-card__price").text()
+                            .replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                        val price = priceText.toDoubleOrNull() ?: return@forEach
+                        val link = card.select("a").attr("href")
+                        val fullLink = if (link.startsWith("http")) link else "https://www.gamivo.com$link"
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Gamivo", price = price,
+                            currency = "EUR", region = parseRegion(title), type = DealType.KEY,
+                            duration = parseDuration(title), url = fullLink, trustLevel = TrustLevel.HIGH
+                        ))
+                    } catch (e: Exception) { }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals
+        }
+    }
+    private fun parseDuration(t: String) = when { t.contains("12") -> Duration.TWELVE_MONTHS; t.contains("6") -> Duration.SIX_MONTHS; t.contains("3") -> Duration.THREE_MONTHS; else -> Duration.ONE_MONTH }
+    private fun parseRegion(t: String) = when { t.contains("Global", true) -> Region.GLOBAL; t.contains("Turkey", true) -> Region.TURKEY; t.contains("Argentina", true) -> Region.ARGENTINA; t.contains("EU", true) -> Region.EU; else -> Region.GLOBAL }
+}
+
+/**
+ * Scraper for Difmark (good for regional keys)
+ */
+class DifmarkScraper : BaseScraper {
+    
+    override suspend fun scrape(filters: SearchFilters): List<PriceDeal> {
+        return withContext(Dispatchers.IO) {
+            val deals = mutableListOf<PriceDeal>()
+            try {
+                val url = "https://www.difmark.com/search?q=xbox+game+pass+ultimate"
+                val doc = fetchDocument(url)
+                doc.select(".product-item").forEach { item ->
+                    try {
+                        val title = item.select(".product-title").text()
+                        if (!title.contains("Ultimate", ignoreCase = true)) return@forEach
+                        val priceText = item.select(".price").text()
+                            .replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                        val price = priceText.toDoubleOrNull() ?: return@forEach
+                        val link = item.select("a").attr("href")
+                        val fullLink = if (link.startsWith("http")) link else "https://www.difmark.com$link"
+                        deals.add(PriceDeal(
+                            id = generateId(), sellerName = "Difmark", price = price,
+                            currency = "EUR", region = parseRegion(title), type = DealType.KEY,
+                            duration = parseDuration(title), url = fullLink, trustLevel = TrustLevel.HIGH
+                        ))
+                    } catch (e: Exception) { }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            deals
+        }
+    }
+    private fun parseDuration(t: String) = when { t.contains("12") -> Duration.TWELVE_MONTHS; t.contains("6") -> Duration.SIX_MONTHS; t.contains("3") -> Duration.THREE_MONTHS; else -> Duration.ONE_MONTH }
+    private fun parseRegion(t: String) = when { t.contains("Turkey", true) || t.contains("TR") -> Region.TURKEY; t.contains("Brazil", true) || t.contains("BR") -> Region.BRAZIL; t.contains("Argentina", true) -> Region.ARGENTINA; else -> Region.GLOBAL }
 }
