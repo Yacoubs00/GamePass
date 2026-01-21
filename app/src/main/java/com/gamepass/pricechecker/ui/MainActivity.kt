@@ -14,6 +14,7 @@ import com.gamepass.pricechecker.R
 import com.gamepass.pricechecker.adapters.DealsAdapter
 import com.gamepass.pricechecker.adapters.FilterOptionsAdapter
 import com.gamepass.pricechecker.models.*
+import com.gamepass.pricechecker.models.TrustFilter
 import com.gamepass.pricechecker.network.FallbackDataProvider
 import com.gamepass.pricechecker.network.PriceScraper
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -44,7 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chipRegion: Chip
     private lateinit var chipDuration: Chip
     private lateinit var chipType: Chip
-    private lateinit var chipTrustedOnly: Chip
+    private lateinit var chipTrustLevel: Chip
     private lateinit var chipExcludeTrials: Chip
     
     // Theme toggle
@@ -127,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         chipRegion = findViewById(R.id.chipRegion)
         chipDuration = findViewById(R.id.chipDuration)
         chipType = findViewById(R.id.chipType)
-        chipTrustedOnly = findViewById(R.id.chipTrustedOnly)
+        chipTrustLevel = findViewById(R.id.chipTrustLevel)
         chipExcludeTrials = findViewById(R.id.chipExcludeTrials)
         
         // Theme toggle button
@@ -182,12 +183,9 @@ class MainActivity : AppCompatActivity() {
             showTypeFilterDialog()
         }
 
-        // Trusted only toggle
-        chipTrustedOnly.setOnCheckedChangeListener { _, isChecked ->
-            currentFilters = currentFilters.copy(trustedOnly = isChecked)
-            if (dealsAdapter.currentList.isNotEmpty()) {
-                applyFiltersToCurrentResults()
-            }
+        // Trust level filter
+        chipTrustLevel.setOnClickListener {
+            showTrustLevelFilterDialog()
         }
         
         // Exclude trials toggle
@@ -262,10 +260,12 @@ class MainActivity : AppCompatActivity() {
     private fun showResults(deals: List<PriceDeal>, searchTimeMs: Long, isFallback: Boolean = false) {
         swipeRefresh.isRefreshing = false
         
-        // Sort deals - prioritize UAE and Global first if user selected those
+        // Sort deals - prioritize UAE and Global together, then by price
         val sortedDeals = deals.sortedWith(compareBy(
-            { it.price },
-            { if (it.region == Region.UAE || it.region == Region.GLOBAL) 0 else 1 }
+            // First: prioritize UAE and Global regions (0 = top priority)
+            { if (it.region == Region.UAE || it.region == Region.GLOBAL) 0 else 1 },
+            // Then: sort by price within each priority group
+            { it.price }
         ))
 
         dealsAdapter.submitList(sortedDeals)
@@ -443,6 +443,41 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    private fun showTrustLevelFilterDialog() {
+        val dialog = BottomSheetDialog(this, R.style.Theme_GamePassPriceChecker)
+        val view = layoutInflater.inflate(R.layout.dialog_filter, null)
+        
+        view.findViewById<TextView>(R.id.tvDialogTitle).text = "Select Trust Level"
+        
+        val recycler = view.findViewById<RecyclerView>(R.id.recyclerOptions)
+        recycler.layoutManager = LinearLayoutManager(this)
+        
+        recycler.adapter = FilterOptionsAdapter(
+            options = TrustFilter.values().toList(),
+            selectedOption = currentFilters.trustFilter,
+            displayText = { filter ->
+                val emoji = when (filter) {
+                    TrustFilter.ALL -> "👥"
+                    TrustFilter.HIGH_ONLY -> "✅"
+                    TrustFilter.HIGH_MEDIUM -> "👍"
+                    TrustFilter.CAUTION -> "⚠️"
+                }
+                "$emoji ${filter.displayName}"
+            },
+            onOptionSelected = { filter ->
+                currentFilters = currentFilters.copy(trustFilter = filter)
+                updateFilterChips()
+                dialog.dismiss()
+                if (dealsAdapter.currentList.isNotEmpty()) {
+                    applyFiltersToCurrentResults()
+                }
+            }
+        )
+        
+        dialog.setContentView(view)
+        dialog.show()
+    }
+
     private fun updateFilterChips() {
         // Update region chip
         val regionEmoji = when (currentFilters.region.code) {
@@ -470,5 +505,14 @@ class MainActivity : AppCompatActivity() {
             DealType.ACCOUNT -> "👤"
         }
         chipType.text = "$typeEmoji ${currentFilters.type.displayName}"
+        
+        // Update trust level chip
+        val trustEmoji = when (currentFilters.trustFilter) {
+            TrustFilter.ALL -> "👥"
+            TrustFilter.HIGH_ONLY -> "✅"
+            TrustFilter.HIGH_MEDIUM -> "👍"
+            TrustFilter.CAUTION -> "⚠️"
+        }
+        chipTrustLevel.text = "$trustEmoji ${currentFilters.trustFilter.displayName}"
     }
 }
