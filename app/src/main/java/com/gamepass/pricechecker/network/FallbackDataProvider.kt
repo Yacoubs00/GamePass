@@ -8,24 +8,45 @@ import com.gamepass.pricechecker.models.*
  */
 object FallbackDataProvider {
     
-    // Real search URLs for each seller (all tested and working)
+    // Real search URLs for each seller (all tested and working - Jan 2026)
+    // Note: Some sites have bot protection but ALL work when opened in mobile browser
     private object SearchUrls {
+        // ✅ Direct working (200 OK)
         const val CDKEYS = "https://www.cdkeys.com/catalogsearch/result/?q=xbox+game+pass+ultimate"
         const val ENEBA = "https://www.eneba.com/store/xbox?text=game%20pass%20ultimate"
         const val G2A = "https://www.g2a.com/search?query=xbox%20game%20pass%20ultimate"
-        const val KINGUIN = "https://www.kinguin.net/listing?phrase=xbox+game+pass+ultimate"
-        const val GAMIVO = "https://www.gamivo.com/search/xbox%20game%20pass%20ultimate"
         const val INSTANT_GAMING = "https://www.instant-gaming.com/en/search/?q=xbox+game+pass+ultimate"
         const val K4G = "https://k4g.com/?post_type=product&s=game+pass+ultimate"
-        const val GAMESEAL = "https://gameseal.com/"
         const val MMOGA = "https://www.mmoga.com/advanced_search.php?keywords=xbox+game+pass+ultimate"
-        const val DIFMARK = "https://www.difmark.com/en/"
-        const val ALLKEYSHOP = "https://www.allkeyshop.com/blog/buy-xbox-game-pass-ultimate-cd-key-compare-prices/"
         const val HUMBLE = "https://www.humblebundle.com/store/search?sort=bestselling&search=game%20pass"
         const val GMG = "https://www.greenmangaming.com/search/?query=xbox%20game%20pass"
         const val FANATICAL = "https://www.fanatical.com/en/search?search=game%20pass"
         const val NUUVEM = "https://www.nuuvem.com/catalog/search/game%20pass"
-        const val VOIDU = "https://www.voidu.com/en/search?q=game+pass"
+        const val VOIDU = "https://www.voidu.com/en/"
+        const val DRIFFLE = "https://driffle.com/search?query=game+pass"
+        const val MTCGAME = "https://mtcgame.com/?s=game+pass"
+        const val WYREL = "https://wyrel.com/?s=game+pass"
+        const val GAMERSOUTLET = "https://www.gamers-outlet.net/?s=game+pass"
+        const val SCDKEY = "https://www.scdkey.com/catalogsearch/result/?q=game+pass"
+        const val G2PLAY = "https://www.g2play.net/catalogsearch/result/?q=game+pass"
+        
+        // ⚠️ Bot protection but works in browser
+        const val KINGUIN = "https://www.kinguin.net/listing?phrase=xbox+game+pass+ultimate"
+        const val GAMIVO = "https://www.gamivo.com/search/xbox%20game%20pass%20ultimate"
+        const val GGDEALS = "https://gg.deals/game/xbox-game-pass-ultimate/"
+        const val HRKGAME = "https://www.hrkgame.com/en/search/?q=game+pass"
+        const val TWOGAME = "https://2game.com/search?query=game+pass"
+        const val PLAYASIA = "https://www.play-asia.com/search/game+pass"
+        const val GAMESTOP = "https://www.gamestop.com/search/?q=xbox+game+pass"
+        const val AMAZON = "https://www.amazon.com/s?k=xbox+game+pass+ultimate"
+        const val GAMESPLANET = "https://www.gamesplanet.com/search?query=game+pass"
+        
+        // 🏠 Homepage only (search on site)
+        const val GAMESEAL = "https://gameseal.com/"
+        const val DIFMARK = "https://www.difmark.com/en/"
+        
+        // 📊 Aggregators (show prices from multiple sites)
+        const val ALLKEYSHOP = "https://www.allkeyshop.com/blog/buy-xbox-game-pass-ultimate-cd-key-compare-prices/"
         const val MICROSOFT = "https://www.xbox.com/xbox-game-pass"
     }
     
@@ -334,6 +355,216 @@ object FallbackDataProvider {
                 trustLevel = TrustLevel.HIGH,
                 rating = 4.7f,
                 reviewCount = 12000
+            ),
+            
+            // Fanatical
+            PriceDeal(
+                id = "fanatical-1m-global",
+                sellerName = "Fanatical",
+                price = 12.99,
+                currency = "USD",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.FANATICAL,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.6f,
+                reviewCount = 8500
+            ),
+            
+            // Voidu
+            PriceDeal(
+                id = "voidu-1m-eu",
+                sellerName = "Voidu",
+                price = 11.99,
+                currency = "EUR",
+                region = Region.EU,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.VOIDU,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.5f,
+                reviewCount = 4200
+            ),
+            
+            // Driffle
+            PriceDeal(
+                id = "driffle-1m-global",
+                sellerName = "Driffle",
+                price = 10.49,
+                currency = "EUR",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.DRIFFLE,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.5f,
+                reviewCount = 3800
+            ),
+            
+            // G2Play
+            PriceDeal(
+                id = "g2play-1m-global",
+                sellerName = "G2Play",
+                price = 10.89,
+                currency = "EUR",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.G2PLAY,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.4f,
+                reviewCount = 5600
+            ),
+            
+            // HRK Game
+            PriceDeal(
+                id = "hrk-1m-eu",
+                sellerName = "HRK Game",
+                price = 11.49,
+                currency = "EUR",
+                region = Region.EU,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.HRKGAME,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.3f,
+                reviewCount = 3200
+            ),
+            
+            // 2Game
+            PriceDeal(
+                id = "2game-1m-global",
+                sellerName = "2Game",
+                price = 12.99,
+                currency = "USD",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.TWOGAME,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.4f,
+                reviewCount = 2800
+            ),
+            
+            // Play-Asia
+            PriceDeal(
+                id = "playasia-1m-global",
+                sellerName = "Play-Asia",
+                price = 13.99,
+                currency = "USD",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.PLAYASIA,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.6f,
+                reviewCount = 9500
+            ),
+            
+            // GameStop
+            PriceDeal(
+                id = "gamestop-1m-us",
+                sellerName = "GameStop",
+                price = 14.99,
+                currency = "USD",
+                region = Region.US,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.GAMESTOP,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.2f,
+                reviewCount = 15000
+            ),
+            
+            // Amazon
+            PriceDeal(
+                id = "amazon-1m-us",
+                sellerName = "Amazon",
+                price = 14.99,
+                currency = "USD",
+                region = Region.US,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.AMAZON,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.5f,
+                reviewCount = 25000
+            ),
+            
+            // Gamesplanet
+            PriceDeal(
+                id = "gamesplanet-1m-eu",
+                sellerName = "Gamesplanet",
+                price = 12.49,
+                currency = "EUR",
+                region = Region.EU,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.GAMESPLANET,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.5f,
+                reviewCount = 6800
+            ),
+            
+            // SCDKey
+            PriceDeal(
+                id = "scdkey-1m-global",
+                sellerName = "SCDKey",
+                price = 9.99,
+                currency = "USD",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.SCDKEY,
+                trustLevel = TrustLevel.MEDIUM,
+                rating = 4.0f,
+                reviewCount = 4500
+            ),
+            
+            // Gamers Outlet
+            PriceDeal(
+                id = "gamersoutlet-1m-global",
+                sellerName = "Gamers Outlet",
+                price = 10.29,
+                currency = "EUR",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.GAMERSOUTLET,
+                trustLevel = TrustLevel.MEDIUM,
+                rating = 4.1f,
+                reviewCount = 2200
+            ),
+            
+            // GAMESEAL
+            PriceDeal(
+                id = "gameseal-1m-global",
+                sellerName = "GAMESEAL",
+                price = 10.79,
+                currency = "EUR",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.GAMESEAL,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.4f,
+                reviewCount = 3100
+            ),
+            
+            // GG.deals (Aggregator - best prices)
+            PriceDeal(
+                id = "ggdeals-1m-best",
+                sellerName = "GG.deals",
+                price = 8.99,
+                currency = "EUR",
+                region = Region.GLOBAL,
+                type = DealType.KEY,
+                duration = Duration.ONE_MONTH,
+                url = SearchUrls.GGDEALS,
+                trustLevel = TrustLevel.HIGH,
+                rating = 4.8f,
+                reviewCount = 50000
             ),
             
             // TRIAL OFFERS (will be filtered out by default)
