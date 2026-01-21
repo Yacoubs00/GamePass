@@ -1,9 +1,12 @@
 package com.gamepass.pricechecker.ui
 
+import android.content.Context
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -42,10 +45,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chipDuration: Chip
     private lateinit var chipType: Chip
     private lateinit var chipTrustedOnly: Chip
+    
+    // Theme toggle
+    private lateinit var btnThemeToggle: ImageButton
 
     // Adapter and data
     private lateinit var dealsAdapter: DealsAdapter
     private val priceScraper = PriceScraper()
+    
+    // Theme preferences
+    private val PREFS_NAME = "GamePassPrefs"
+    private val KEY_DARK_MODE = "dark_mode"
     
     // Current filters
     private var currentFilters = SearchFilters(
@@ -56,15 +66,50 @@ class MainActivity : AppCompatActivity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Apply saved theme before setContentView
+        applySavedTheme()
+        
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         initViews()
         setupRecyclerView()
         setupListeners()
+        updateThemeIcon()
         
         // Show initial empty state
         showEmptyState()
+    }
+    
+    private fun applySavedTheme() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val isDarkMode = prefs.getBoolean(KEY_DARK_MODE, true) // Default to dark
+        AppCompatDelegate.setDefaultNightMode(
+            if (isDarkMode) AppCompatDelegate.MODE_NIGHT_YES 
+            else AppCompatDelegate.MODE_NIGHT_NO
+        )
+    }
+    
+    private fun toggleTheme() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val isDarkMode = prefs.getBoolean(KEY_DARK_MODE, true)
+        val newMode = !isDarkMode
+        
+        prefs.edit().putBoolean(KEY_DARK_MODE, newMode).apply()
+        
+        AppCompatDelegate.setDefaultNightMode(
+            if (newMode) AppCompatDelegate.MODE_NIGHT_YES 
+            else AppCompatDelegate.MODE_NIGHT_NO
+        )
+    }
+    
+    private fun updateThemeIcon() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val isDarkMode = prefs.getBoolean(KEY_DARK_MODE, true)
+        btnThemeToggle.setImageResource(
+            if (isDarkMode) android.R.drawable.ic_menu_day  // Sun icon for switching to light
+            else android.R.drawable.ic_menu_night           // Moon icon for switching to dark (Note: using available system icons)
+        )
     }
 
     private fun initViews() {
@@ -82,6 +127,9 @@ class MainActivity : AppCompatActivity() {
         chipDuration = findViewById(R.id.chipDuration)
         chipType = findViewById(R.id.chipType)
         chipTrustedOnly = findViewById(R.id.chipTrustedOnly)
+        
+        // Theme toggle button
+        btnThemeToggle = findViewById(R.id.btnThemeToggle)
         
         // Style the swipe refresh
         swipeRefresh.setColorSchemeResources(R.color.xbox_green)
@@ -110,6 +158,11 @@ class MainActivity : AppCompatActivity() {
         // Swipe to refresh
         swipeRefresh.setOnRefreshListener {
             searchDeals()
+        }
+        
+        // Theme toggle
+        btnThemeToggle.setOnClickListener {
+            toggleTheme()
         }
 
         // Region filter chip
