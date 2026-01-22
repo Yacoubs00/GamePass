@@ -493,7 +493,8 @@ class PriceFetchService : Service() {
         val products = mutableListOf<CachedPrice>()
         
         try {
-            val jsonArray = gson.fromJson(jsonResult, Array<Map<String, Any>>::class.java) ?: emptyArray()
+            @Suppress("UNCHECKED_CAST")
+            val jsonArray = gson.fromJson(jsonResult, Array::class.java) as? Array<Map<String, Any>> ?: emptyArray()
             
             for (item in jsonArray) {
                 val title = item["title"]?.toString() ?: "Game Pass Ultimate"
