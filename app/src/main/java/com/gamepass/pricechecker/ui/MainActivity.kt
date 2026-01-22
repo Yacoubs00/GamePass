@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 PriceFetchService.ACTION_PRICE_RESULT -> {
-                    val siteName = intent.getStringExtra(PriceFetchService.EXTRA_SITE_COMPLETED) ?: ""
+                    val siteName = intent.getStringExtra(PriceFetchService.EXTRA_SITE_NAME) ?: ""
                     val dealsJson = intent.getStringExtra(PriceFetchService.EXTRA_DEALS) ?: "[]"
                     
                     try {
