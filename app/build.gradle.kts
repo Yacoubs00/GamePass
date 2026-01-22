@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp") version "1.9.22-1.0.17"
 }
 
 android {
@@ -66,9 +67,21 @@ dependencies {
     // Cloudflare bypass for protected sites
     implementation("com.github.darkryh:Cloudflare-Bypass:0.0.5")
     
+    // Modern WebView features
+    implementation("androidx.webkit:webkit:1.11.0")
+    
+    // WorkManager for background/scheduled tasks
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    
+    // Room Database for caching prices
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
+    
     // Coroutines for async operations
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
     
     // SwipeRefreshLayout
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
