@@ -396,33 +396,64 @@ class AllKeyShopScraper : BaseScraper {
                 // Use retry logic with 60s timeout for this slow site
                 val doc = fetchDocumentWithRetry(url, maxRetries = 3, baseTimeoutMs = 60000) ?: return@withContext deals
                 
-                // Parse the price comparison table
-                doc.select(".offers-table .offers-table-row").forEach { row ->
+                // Parse recommended offers (these have real prices)
+                doc.select("a.recomended_offers").forEach { offer ->
                     try {
-                        val merchant = row.select(".merchant-name").text().trim()
-                        val priceText = row.select(".price").text()
-                            .replace("[^0-9.,]".toRegex(), "")
-                            .replace(",", ".")
-                        val price = priceText.toDoubleOrNull() ?: return@forEach
+                        val text = offer.text()
+                        val link = offer.attr("href")
                         
-                        val link = row.select("a.buy-btn").attr("href")
-                        val region = parseRegionFromText(row.select(".region").text())
+                        // Extract price (format: "7.84€" or "€7.84")
+                        val priceMatch = Regex("""(\d+\.?\d*)\s*€|€\s*(\d+\.?\d*)""").find(text)
+                        val price = priceMatch?.let { 
+                            (it.groupValues[1].takeIf { it.isNotEmpty() } ?: it.groupValues[2]).toDoubleOrNull() 
+                        } ?: return@forEach
                         
-                        val seller = Sellers.getAll().find { 
-                            merchant.contains(it.name, ignoreCase = true) 
-                        }
+                        // Extract merchant name (usually uppercase word)
+                        val merchantMatch = Regex("""([A-Z][A-Za-z0-9]+)""").find(text.split("€")[0])
+                        val merchant = merchantMatch?.value ?: "AllKeyShop"
+                        
+                        // Extract region from text
+                        val region = parseRegionFromText(text)
                         
                         deals.add(PriceDeal(
                             id = generateId(),
                             sellerName = merchant,
                             price = price,
-                            currency = "USD",
+                            currency = "EUR",
                             region = region,
                             type = DealType.KEY,
                             duration = Duration.ONE_MONTH,
-                            url = link.ifEmpty { "https://www.allkeyshop.com" },
-                            trustLevel = seller?.trustLevel ?: TrustLevel.MEDIUM
+                            url = link.ifEmpty { url },
+                            trustLevel = TrustLevel.HIGH
                         ))
+                    } catch (e: Exception) {
+                        // Skip malformed entries
+                    }
+                }
+                
+                // Also parse the offers-price elements for more prices
+                doc.select("div.offers-price").forEach { priceDiv ->
+                    try {
+                        val priceText = priceDiv.text().replace("[^0-9.,]".toRegex(), "").replace(",", ".")
+                        val price = priceText.toDoubleOrNull() ?: return@forEach
+                        
+                        if (price > 0 && price < 200 && deals.none { it.price == price }) {
+                            // Find parent link for URL
+                            val parentLink = priceDiv.parents().select("a[href]").firstOrNull()
+                            val link = parentLink?.attr("href") ?: url
+                            
+                            deals.add(PriceDeal(
+                                id = generateId(),
+                                sellerName = "AllKeyShop",
+                                price = price,
+                                currency = "EUR",
+                                region = Region.GLOBAL,
+                                type = DealType.KEY,
+                                duration = Duration.ONE_MONTH,
+                                url = link,
+                                trustLevel = TrustLevel.HIGH
+                            ))
+                        }
                     } catch (e: Exception) {
                         // Skip malformed entries
                     }
